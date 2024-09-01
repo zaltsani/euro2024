@@ -1,5 +1,5 @@
 import React from "react";
-import NavigationBar from "./Navbar";
+import NavigationBar from "./NavigationBar";
 
 function Layout(props) {
     return (
