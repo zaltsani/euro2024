@@ -9,7 +9,7 @@ function App() {
     <Routes>
 
       <Route path='/' element={<Home />} />
-      <Route path='/match/:match_id/' element={<Match />} />
+      <Route path='/match/:matchId/' element={<Match />} />
 
     </Routes>
   );

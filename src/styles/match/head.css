@@ -1,0 +1,73 @@
+.inner {
+    margin: 33px;
+}
+
+hr {
+    height: 1px;
+    background: #898989;
+    margin: none;
+}
+
+.bordered-image {
+    border: 1px solid black;
+  }
+
+.button {
+    /* width: 7%; */
+    border: 1px;
+    border-top: 0px;
+    background: white;
+    margin: none;
+    text-align: center;
+}
+
+.button-nav {
+    width: 10%;
+}
+
+.button-active {
+    border-bottom: 2px solid black;
+}
+
+.event {
+    position: relative;
+}
+
+.home-event {
+    position: absolute;
+    right: 55%;
+    /* text-align: right; */
+}
+
+.away-event {
+    position: absolute;
+    left: 55%;
+    /* text-align: right; */
+}
+
+.minute {
+    width: 50%;
+    text-align: center;
+}
+
+.player-number {
+    text-anchor: middle;
+    font-size: 25px;
+}
+
+.player-name {
+    text-anchor: middle;
+    font-size: 16px;
+}
+
+#statistics {
+    width: 100%;
+}
+
+#statistics td {
+    text-align: center;
+}
+
+#statistics th {
+    text-align: center;
+}
