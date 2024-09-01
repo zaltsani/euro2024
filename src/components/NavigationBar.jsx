@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navbar, Container } from "react-bootstrap";
+import { Navbar, Container, Row } from "react-bootstrap";
 import '../styles/Navbar.css'
 
 
