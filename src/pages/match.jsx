@@ -3,6 +3,7 @@ import FetchData from '../hooks/FetchData';
 import { useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import Head from '../components/match/head';
+import Lineups from '../components/match/lineups';
 
 function Match() {
     const { matchId } = useParams();
@@ -14,6 +15,20 @@ function Match() {
     const { data: eventsData, loading: loadingEventsData, error: errorEventsData } = FetchData(eventsUrl);
     const { data: lineupsData, loading: loadingLineupsData, error: errorLineupsData } = FetchData(lineupsUrl);
 
+    const [matchData, setMatchData] = useState();
+    const [homeTeam, setHomeTeam] = useState();
+    const [awayTeam, setAwayTeam] = useState();
+    
+    useEffect(() => {
+        const matchIdNumber = Number(matchId);
+        setMatchData(matchesData.find(match => match.match_id === matchIdNumber))
+        if (matchData) {
+            setHomeTeam(matchData?.home_team.home_team_name)
+            setAwayTeam(matchData?.away_team.away_team_name)
+        }
+    }, [matchesData, matchId, matchData])
+
+
     if (loadingMatchesData || loadingEventsData || loadingLineupsData) {
         return <div>Loading...</div>;
     }
@@ -21,15 +36,12 @@ function Match() {
     if (errorMatchesData || errorEventsData || errorLineupsData) {
         return <div>Error: {errorMatchesData?.message || errorEventsData?.message || errorLineupsData?.message}</div>;
     }
-
-    const matchData = matchesData.find(match => match.match_id = matchId);
-    const homeTeam = matchData.home_team.home_team_name;
-    const awayTeam = matchData.away_team.away_team_name;
     
-
+    
     return (
         <Layout>
             <Head matchData={matchData} eventsData={eventsData} />
+            <Lineups matchData={matchData} lineupsData={lineupsData} />
         </Layout>
     )
 }

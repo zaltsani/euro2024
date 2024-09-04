@@ -21,7 +21,7 @@ function Head(props) {
     const homeCountryCode = findKeyByValue(countryCode, homeTeam);
     const awayCountryCode = findKeyByValue(countryCode, awayTeam)
 
-    console.log(homeCountryCode)
+    // console.log(homeCountryCode)
     
 
     return (
@@ -31,11 +31,11 @@ function Head(props) {
                     {matchData.season.season_name} {matchData.competition.competition_name}
                 </p>
                 <div className='fs-2 fw-bold title my-container'>
-                    <span className='m-3 left'>{homeTeam}</span>
-                    <img className='bordered-image left' src={`https://flagcdn.com/${homeCountryCode}.svg`} height={50} alt={homeTeam} />
-                    <span className='m-3 score-center'>{matchData.home_score} - {matchData.away_score}</span>
-                    <img className='bordered-image right' src={`https://flagcdn.com/${awayCountryCode}.svg`} height={50} alt={awayTeam} />
-                    <span className='m-3 right'>{awayTeam}</span>
+                    <span className='home-team'>{homeTeam}</span>
+                    <img className='bordered-image home-flag' src={`https://flagcdn.com/${homeCountryCode}.svg`} height={50} alt={homeTeam} />
+                    <span className='score'>{matchData.home_score} - {matchData.away_score}</span>
+                    <img className='bordered-image away-flag' src={`https://flagcdn.com/${awayCountryCode}.svg`} height={50} alt={awayTeam} />
+                    <span className='away-team'>{awayTeam}</span>
                 </div>
 
                 <div className='mt-5'>

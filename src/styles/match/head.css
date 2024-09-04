@@ -33,6 +33,32 @@ hr {
     position: relative;
 }
 
+.home-team {
+    position: absolute;
+    right: 60%;
+}
+
+.home-flag {
+    position: absolute;
+    right: 54%;
+}
+
+.away-team {
+    position: absolute;
+    left: 60%;
+    text-align: center;
+}
+
+.away-flag {
+    position: absolute;
+    left: 54%;
+}
+
+.score {
+    width: 50%;
+    text-align: center;
+}
+
 .home-event {
     position: absolute;
     right: 55%;
