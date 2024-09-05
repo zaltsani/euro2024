@@ -29,10 +29,6 @@ hr {
     border-bottom: 2px solid black;
 }
 
-.event {
-    position: relative;
-}
-
 .home-team {
     position: absolute;
     right: 60%;
@@ -69,6 +65,20 @@ hr {
     position: absolute;
     left: 55%;
     /* text-align: right; */
+}
+
+.home-event-type {
+    position: absolute;
+    right: 52%;
+}
+
+.away-event-type {
+    position: absolute;
+    left: 52%
+}
+
+.own-goal {
+    opacity: 50%;
 }
 
 .minute {

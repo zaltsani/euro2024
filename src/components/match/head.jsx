@@ -10,7 +10,8 @@ function Head(props) {
     const mainEvent = eventsData?.filter(event =>
         (event.type.name === 'Shot' && event.shot.outcome.name === 'Goal' && event.period !== 5)
         || ('bad_behaviour' in event && 'card' in event.bad_behaviour && event.bad_behaviour.card.id === 5)
-        || ('foul_committed' in event && 'card' in event.foul_committed && event.foul_committed.card.id === 5   )
+        || ('foul_committed' in event && 'card' in event.foul_committed && event.foul_committed.card.id === 5)
+        || (event.type.name === 'Own Goal Against')
     )
 
     const countryCode = require("../../data/country_code.json")
@@ -41,7 +42,12 @@ function Head(props) {
                 <div className='mt-5'>
                     {mainEvent.map((event) => (
                             <p className='event'>
-                                <span className={`${event.team.name === homeTeam ? 'home' : 'away'}-event`}>{event.player.name}</span>
+                                <span className={`${event.team.name === homeTeam ? 'home' : 'away'}-event`}>{event.player.name}{event.type.name === 'Own Goal Against' ? ' (OG)' : ''}</span>
+                                {event.type.name === 'Shot' || event.type.name === 'Own Goal Against' ? (
+                                    <img className={`${event.team.name === homeTeam ? 'home' : 'away'}-event-type ${event.type.name === 'Own Goal Against' ? 'own-goal' : ''}`} src={'https://ssl.gstatic.com/onebox/sports/game_feed/goal_icon.svg'} height={20} />
+                                ) : (
+                                    <img className={`${event.team.name === homeTeam ? 'home' : 'away'}-event-type`} src={'https://ssl.gstatic.com/onebox/sports/soccer_timeline/red-card-right.svg'} height={20} />
+                                )}
                                 <span className='type'></span>
                                 <span className='minute'>{event.minute}'</span>
                             </p>
