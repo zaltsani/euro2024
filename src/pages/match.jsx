@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import Head from '../components/match/head';
 import Lineups from '../components/match/lineups';
-import { Row } from 'react-bootstrap';
+import { Col, Row } from 'react-bootstrap';
 import Events from '../components/match/Events';
 import PlayerStats from '../components/match/PlayerStats';
 
@@ -55,7 +55,7 @@ function Match() {
             {content === 'summary' ? (
                 <Lineups matchData={matchData} lineupsData={lineupsData} />
             ) : content === 'event' ? (
-                <Events />
+                <Events matchData={matchData} lineupsData={lineupsData} eventsData={eventsData} />
             ) : content === 'playerStats' ? (
                 <PlayerStats />
             ) : (

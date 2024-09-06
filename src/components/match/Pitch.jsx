@@ -11,22 +11,22 @@ function Pitch(props) {
    const innerHeight = height - margin - margin;
 
    const lineColor = line_color ? line_color : "grey";
-   const lineWidth = 0.2;
+   const lineWidth = 2;
 
    // Scaling
    var scX = d3.scaleLinear().domain([ 0, dimension.length ]).range([ 0, innerWidth ])
    var scY = d3.scaleLinear().domain([ 0, dimension.width ]).range([ 0, innerHeight ])
-   var scXLen = d3.scaleLinear().domain([ 0, dimension.length ]).range([ 0, width ])
-   var scYLen = d3.scaleLinear().domain([ 0, dimension.width ]).range([ 0, height ])
 
    const svg = d3.select(`#${id}`)
-      .append('svg')
-         .attr('viewBox', `0 0 ${width} ${height}`)
-         .attr('fill', 'none');
+   svg
+      .attr('fill', 'none')
+      .attr('width', width)
+      .attr('height', height);
    
    const pitch = svg
       .append('g')
-         .attr("transform", `translate(${margin}, ${margin})`);
+         .attr("transform", `translate(${margin}, ${margin})`)
+         .attr("id", `pitch-${id}`);
 
    // Clear previous drawings
    // svg.selectAll('*').remove();
