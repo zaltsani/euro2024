@@ -1,7 +1,8 @@
 import * as d3 from 'd3';
+import { useEffect } from 'react';
 
 function Pitch(props) {
-   const { id, width, pitch_dimension, background, line_color } = props;
+   const { svgRef, width, pitch_dimension, background, line_color } = props;
    const dimensions = require('../../data/dimensions.json')
    const dimension = dimensions[pitch_dimension]
 
@@ -13,28 +14,24 @@ function Pitch(props) {
    const lineColor = line_color ? line_color : "grey";
    const lineWidth = 2;
 
+   const svg = d3.select(svgRef.current)
+      // .attr("viewBox", `0 0 ${width} ${height}`)
+      .attr("width", width)
+      .attr("height", height)
+
    // Scaling
    var scX = d3.scaleLinear().domain([ 0, dimension.length ]).range([ 0, innerWidth ])
    var scY = d3.scaleLinear().domain([ 0, dimension.width ]).range([ 0, innerHeight ])
 
-   const svg = d3.select(`#${id}`)
-   svg
-      .attr('fill', 'none')
-      .attr('width', width)
-      .attr('height', height);
-   
    const pitch = svg
       .append('g')
          .attr("transform", `translate(${margin}, ${margin})`)
-         .attr("id", `pitch-${id}`);
-
-   // Clear previous drawings
-   // svg.selectAll('*').remove();
+         .attr("class", 'pitch');
 
    // background
-   svg.append('path')
-      .attr('d', `M0 0, H${width} V${height} H0 V0`)
-      .attr('fill', 'none');
+   // svg.append('path')
+   //    .attr('d', `M0 0, H${width} V${height} H0 V0`)
+   //    .attr('fill', 'none');
 
    // Pitch
    pitch.append('path')
@@ -144,13 +141,13 @@ function Pitch(props) {
 
       // goal
    pitch.append('path')
-     .attr('d', `M0 ${scY(dimension.invert_y ? dimension.goal_top : dimension.goal_bottom)} h-${scX(dimension.goal_length)} v${scY(dimension.goal_width)} h${scX(dimension.goal_length)}`)
-     .attr('stroke', lineColor)
-     .attr('stroke-width', lineWidth)
+      .attr('d', `M0 ${scY(dimension.invert_y ? dimension.goal_top : dimension.goal_bottom)} h-${scX(dimension.goal_length)} v${scY(dimension.goal_width)} h${scX(dimension.goal_length)}`)
+      .attr('stroke', lineColor)
+      .attr('stroke-width', lineWidth)
    pitch.append('path')
-     .attr('d', `M${scX(dimension.length)} ${scY(dimension.invert_y ? dimension.goal_top : dimension.goal_bottom)} h${scX(dimension.goal_length)} v${scY(dimension.goal_width)} h-${scX(dimension.goal_length)}`)
-     .attr('stroke', lineColor)
-     .attr('stroke-width', lineWidth)
-
+      .attr('d', `M${scX(dimension.length)} ${scY(dimension.invert_y ? dimension.goal_top : dimension.goal_bottom)} h${scX(dimension.goal_length)} v${scY(dimension.goal_width)} h-${scX(dimension.goal_length)}`)
+      .attr('stroke', lineColor)
+      .attr('stroke-width', lineWidth)
+   
 };
 export default Pitch
