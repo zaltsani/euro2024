@@ -7,6 +7,7 @@ import Lineups from '../components/match/lineups';
 import { Col, Row } from 'react-bootstrap';
 import Events from '../components/match/Events';
 import PlayerStats from '../components/match/PlayerStats';
+import Statistics from '../components/match/Statistics';
 
 function Match() {
     const { matchId } = useParams();
@@ -53,11 +54,18 @@ function Match() {
             </Row>
 
             {content === 'summary' ? (
-                <Lineups matchData={matchData} lineupsData={lineupsData} />
+                <Row>
+                    <Col>
+                        <Lineups matchData={matchData} lineupsData={lineupsData} />
+                    </Col>
+                    <Col>
+                        <Statistics events_data={eventsData} match_data={matchData} />
+                    </Col>
+                </Row>
             ) : content === 'event' ? (
                 <Events matchData={matchData} lineupsData={lineupsData} eventsData={eventsData} />
             ) : content === 'playerStats' ? (
-                <PlayerStats />
+                <PlayerStats events_data={eventsData} match_data={matchData} lineups_data={lineupsData} />
             ) : (
                 <p>Choose Content</p>
             )}

@@ -150,19 +150,20 @@ function Events(props) {
 
 
                     tooltipBackground
-                        .transition().duration(200)
                         .attr("x", d.team.name === homeTeamName ? -20-300 : 20)
                         .attr("y", -75)
                         .attr("width", 300)
                         .attr("height", 220)
                     tooltipWrapper
-                        .transition().duration(200)
                         .attr("transform", `translate(${pitchProps.margin + scX(d['team']['name'] === homeTeamName ? d['location'][0] : dimension.length - d['location'][0])}, ${pitchProps.margin + scY(d['team']['name'] === homeTeamName ? d['location'][1] : dimension.width - d['location'][1])})`)
+                    tooltipWrapper
+                        .transition().duration(400)
                         .style("opacity", 1)
                 })
                 .on("mouseout", function(d) {
                     tooltipWrapper
                         .transition().duration(200)
+                        .style("opacity", 0)
                     tooltipBackground
                         .transition().duration(200)
                         .attr("width", 0)
@@ -248,17 +249,17 @@ function Events(props) {
                     
                     let backgroundHeight = 40 + 26*row
                     tooltipBackground
-                        .transition().duration(200)
                         .attr("x", 20)
                         .attr("y", -75)
                         .attr("width", 300)
                         .attr("height", backgroundHeight)
                     tooltipWrapper
-                        .transition().duration(200)
                         .attr("transform", `translate(
                             ${mouseEvent.offsetX < width - pitchProps.margin - 300 ? mouseEvent.offsetX : mouseEvent.offsetX - 300 - 40 },
                             ${mouseEvent.offsetY < 75+20 ? 75+20 : mouseEvent.offsetY > height - pitchProps.margin - backgroundHeight ? height - pitchProps.margin - backgroundHeight + 75 : mouseEvent.offsetY}
                         )`)
+                    tooltipWrapper
+                        .transition().duration(200)
                         .style("opacity", 1)
                 })
                 .on("mouseout", function(d) {
