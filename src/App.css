@@ -33,3 +33,7 @@ body {
   font: normal 18px;
   fill: black;
 }
+
+.text-align-center{
+  text-align: center
+}

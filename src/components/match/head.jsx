@@ -20,7 +20,7 @@ function Head(props) {
         return entry ? entry[0] : undefined;
     };
     const homeCountryCode = findKeyByValue(countryCode, homeTeam);
-    const awayCountryCode = findKeyByValue(countryCode, awayTeam)
+    const awayCountryCode = findKeyByValue(countryCode, awayTeam);
 
     // console.log(homeCountryCode)
     

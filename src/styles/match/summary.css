@@ -1,0 +1,17 @@
+.statistics {
+    margin-right: 100px;
+    align-content: center;
+}
+
+.stats-detail {
+    font: 9px Raleway;
+    fill: black;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    stroke: black;
+    stroke-width: 0.2;
+}
+
+.country-flag {
+    outline:solid 1pt gray;
+}
