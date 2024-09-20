@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Button, ButtonGroup, Table } from 'react-bootstrap';
+import '../../styles/match/PlayerStats.css';
 
 function PlayerStats(props) {
     const { events_data, match_data, lineups_data } = props;
@@ -10,13 +11,17 @@ function PlayerStats(props) {
     const awayLineups = lineups_data[1]["lineup"];
     const homePlayers = homeLineups.filter(d => d.positions.length !== 0);
     const awayPlayers = awayLineups.filter(d => d.positions.length !== 0);
+    const playersPlay = homePlayers.concat(awayPlayers);
     
     const [homeAway, setHomeAway] = useState('home')
     const [statsType, setStatsType] = useState('general');
     const [homePlayersStats, setHomePlayersStats] = useState(homePlayers);
     const [awayPlayersStats, setAwayPlayersStats] = useState(awayPlayers);
+    // const [playerStats, setPlayerStats] = useState(playersPlay)
     const [isLoad, setIsLoad] = useState(false);
-    const listPlayersStats = homeAway === 'home' ? homePlayersStats : awayPlayersStats;
+    const [listPlayersStats, setListPlayersStats] = useState(playersPlay);
+    // const listPlayersStats = homeAway === 'home' ? homePlayersStats : awayPlayersStats;
+    // const listPlayersStats = playerStats;
 
     const calculatePlayerStats = (players, events_data) => {
         return players.map(player => {
@@ -80,18 +85,25 @@ function PlayerStats(props) {
 
     useEffect(() => {
         setHomePlayersStats(calculatePlayerStats(homePlayers, events_data));
-        setAwayPlayersStats(calculatePlayerStats(awayPlayers, events_data))
+        setAwayPlayersStats(calculatePlayerStats(awayPlayers, events_data));
+        setListPlayersStats(calculatePlayerStats(playersPlay, events_data))
         setIsLoad(true);
-    }, [homePlayers, awayPlayers, events_data])
+    }, [playersPlay, homePlayers, awayPlayers, events_data])
+
+    const handleSort = (type) => {
+        const sortData = listPlayersStats.sort((a, b) => b["stats"][type] - a["stats"][type]);
+        setListPlayersStats(sortData);
+        // console.log(listPlayersStats)
+    }
 
 
     return (
-        <div>
-            <div className='m-3 d-flex justify-content-center'>
-                <ButtonGroup>
+        <div id='player-stats-container'>
+            <div className='m-3 mt-3 d-flex justify-content-center'>
+                {/* <ButtonGroup>
                     <Button variant={`${homeAway === 'home' ? 'danger' : 'outline-danger'}`} onClick={() => setHomeAway('home')}>{homeTeam}</Button>
                     <Button variant={`${homeAway === 'away' ? 'danger' : 'outline-danger'}`} onClick={() => setHomeAway('away')}>{awayTeam}</Button>
-                </ButtonGroup>
+                </ButtonGroup> */}
             </div>
             <div>
                 <ButtonGroup>
@@ -111,8 +123,8 @@ function PlayerStats(props) {
                         <thead>
                             <tr>
                                 <th>Player Name</th>
-                                <th>Goal</th>
-                                <th>Assist</th>
+                                <th onClick={() => handleSort("goal")}>Goal</th>
+                                <th onClick={() => handleSort("assist")}>Assist</th>
                                 <th>Shot</th>
                                 <th>xG</th>
                                 <th>Passes</th>

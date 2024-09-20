@@ -8,6 +8,9 @@ import { Col, Row } from 'react-bootstrap';
 import Events from '../components/match/Events';
 import PlayerStats from '../components/match/PlayerStats';
 import Statistics from '../components/match/Statistics';
+import Analytics from '../components/match/Analytics';
+
+
 
 function Match() {
     const { matchId } = useParams();
@@ -15,9 +18,17 @@ function Match() {
     const eventsUrl = `https://raw.githubusercontent.com/statsbomb/open-data/master/data/events/${matchId}.json`;
     const lineupsUrl = `https://raw.githubusercontent.com/statsbomb/open-data/master/data/lineups/${matchId}.json`;
 
+
     const { data: matchesData, loading: loadingMatchesData, error: errorMatchesData } = FetchData(matchesUrl);
     const { data: eventsData, loading: loadingEventsData, error: errorEventsData } = FetchData(eventsUrl);
     const { data: lineupsData, loading: loadingLineupsData, error: errorLineupsData } = FetchData(lineupsUrl);
+
+    // const matchesData = require("../data/282.json");
+    // const eventsData = require("../data/events-3942819.json");
+    // const lineupsData = require("../data/lineups-3942819.json")
+    // const matchData = matchesData.find(match => match.match_id === Number(matchId))
+    // const homeTeam = matchData.home_team.home_team_name;
+    // const awayTeam = matchData.away_team.away_team_name;
 
     const [matchData, setMatchData] = useState();
     const [homeTeam, setHomeTeam] = useState();
@@ -50,6 +61,7 @@ function Match() {
                 <button className={`button button-nav ${content === 'summary' ? 'button-active' : ''}`} onClick={() => setContent('summary')}>Summary</button>
                 <button className={`button button-nav ${content === 'event' ? 'button-active' : ''}`} onClick={() => setContent('event')}>Event</button>
                 <button className={`button button-nav ${content === 'playerStats' ? 'button-active' : ''}`} onClick={() => setContent('playerStats')}>Player Stats</button>
+                <button className={`button button-nav ${content === 'analytics' ? 'button-active' : ''}`} onClick={() => setContent('analytics')}>Analytics</button>
                 <hr />
             </Row>
 
@@ -66,6 +78,8 @@ function Match() {
                 <Events matchData={matchData} lineupsData={lineupsData} eventsData={eventsData} />
             ) : content === 'playerStats' ? (
                 <PlayerStats events_data={eventsData} match_data={matchData} lineups_data={lineupsData} />
+            ) : content === 'analytics' ? (
+                <Analytics events_data={eventsData} match_data={matchData} lineups_data={lineupsData} />
             ) : (
                 <p>Choose Content</p>
             )}

@@ -21,7 +21,6 @@ function Statistics(props) {
     const redCards = events_data?.filter(event => ('bad_behaviour' in event && 'card' in event.bad_behaviour && event.bad_behaviour.card.name === 'Red Card') || (('foul_committed' in event) && ('card' in event.foul_committed) && (event.foul_committed.card.name === 'Red Card')));
     const offsides = events_data?.filter(event => event.type.name === "Offside" || ('pass' in event && 'outcome' in event.pass && event.pass.outcome.name === "Pass Offside"))
     const cornerKicks = events_data?.filter(event => 'pass' in event && 'type' in event.pass && event.pass.type.name === 'Corner')
-    console.log(offsides)
     
     const statistics = [
         {
@@ -89,7 +88,7 @@ function Statistics(props) {
         const arcGenerator = d3.arc()
             .startAngle(d => d.startAngle)
             .endAngle(d => d.endAngle)
-            .innerRadius(30)
+            .innerRadius(33)
             .outerRadius(50)
             .padAngle(0.02)
             .cornerRadius(3);
@@ -164,14 +163,14 @@ function Statistics(props) {
         <svg viewBox={`0 0 ${width} ${height}`}>
             <image
                 href={`https://flagcdn.com/${homeCountryCode}.svg`}
-                width={55}
+                width={50}
                 transform={`translate(${margin.left}, ${margin.top + 60/2 + 10})`}
                 className='country-flag'
             />
             <image
                 href={`https://flagcdn.com/${awayCountryCode}.svg`}
-                width={55}
-                transform={`translate(${innerWidth-55}, ${margin.top + 60/2 + 10})`}
+                width={50}
+                transform={`translate(${innerWidth-50}, ${margin.top + 60/2 + 10})`}
                 className='country-flag'
             />
             <g
@@ -181,22 +180,22 @@ function Statistics(props) {
             </g>
             
             {statistics.map((stats, index) => (
-                <g transform={`translate(${margin.left}, ${margin.top + 140 + 30*index})`}>
+                <g transform={`translate(${margin.left}, ${margin.top + 140 + 27*index})`}>
                     <rect
                         x={0}
                         y={0}
                         width={stats.homeTeam / (stats.homeTeam + stats.awayTeam) * innerWidth - .1}
-                        height={13}
+                        height={12}
                         fill='#0300CC'
-                        rx={5}
+                        rx={3}
                     />
                     <rect
                         x={stats.homeTeam / (stats.homeTeam + stats.awayTeam) * innerWidth + .1}
                         y={0}
                         width={innerWidth - stats.homeTeam / (stats.homeTeam + stats.awayTeam) * innerWidth}
-                        height={13}
+                        height={12}
                         fill='#D10000'
-                        rx={5}
+                        rx={3}
                     />
                     <text x={5} y={-6} className='stats-detail'>{stats.homeTeam}</text>
                     <text x={innerWidth/2} y={-6} className='stats-detail'>{stats.title}</text>
