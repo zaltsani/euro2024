@@ -37,3 +37,8 @@
     font-size: 20px;
     font-weight: bold;
 }
+
+.player-input {
+    margin-left: 100px;
+    align-content: center;
+}

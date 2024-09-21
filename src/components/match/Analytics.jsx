@@ -14,6 +14,7 @@ function Analytics(props) {
     const awayLineups = lineups_data[1]["lineup"];
     const homePlayersPlay = homeLineups.filter(d => d.positions.length !== 0);
     const awayPlayersPlay = awayLineups.filter(d => d.positions.length !== 0);
+    const allPlayersPlay = homePlayersPlay.concat(awayPlayersPlay);
     const homeStarting = homePlayersPlay.filter(d => d.positions[0].start_reason === "Starting XI");
     const awayStarting = awayPlayersPlay.filter(d => d.positions[0].start_reason === "Starting XI");
 
@@ -444,17 +445,6 @@ function Analytics(props) {
                 .attr("dominant-baseline", "middle")
     })
 
-    // const xScale = d3.scaleBand()
-    //     .domain([0, 1, 2])
-    //     .range([0, 500])
-    // console.log(xScale(0)); // Outputs the starting position of 'A'
-    // console.log(xScale(1)); // Outputs the starting position of 'B'
-    // console.log(xScale(2));
-    // console.log(Array(10).fill().map(function(element, index) {
-    //     return {"a": index}
-    // }))
-    // console.log(Array.from({length:5}, (value, index) => index))
-    // console.log(xScale.bandwidth())
 
 
     // Passes Heatmaps
@@ -542,7 +532,6 @@ function Analytics(props) {
             });
         });
 
-        console.log(passes)
         const colorScale = d3.scaleSequential(d3.interpolateRgb("white", "red"))
             .domain([0, d3.max(heatmapsData, d => d.count)]);
 
@@ -607,6 +596,159 @@ function Analytics(props) {
     })
 
 
+    // Player Passes Heatmaps
+    const [playerNamePassesHeatmaps, setPlayerNamePassesHeatmaps] = useState(allPlayersPlay[0]["player_name"])
+    const [numberPlayerPasses, setNumberPlayerPasses] = useState(0);
+    const playerPassHeatmapsRef = useRef();
+    useEffect(() => {
+        const playerPasses = passes.filter(d => d.player.name === playerNamePassesHeatmaps);
+        setNumberPlayerPasses(playerPasses.length);
+        const svg = d3.select(playerPassHeatmapsRef.current)
+        svg.selectAll("*").remove()
+        // Make Pitch
+        const id = 'heatmaps';
+        const width = 700
+        const pitchProps = {
+            svgRef: playerPassHeatmapsRef,
+            width: width,
+            margin: width/40,
+            pitch_dimension: 'statsbomb',
+            background: 'white',
+            line_color: 'grey'
+        };
+
+        const dimensions = require('../../data/dimensions.json');
+        const dimension = dimensions["statsbomb"];
+        const height = width * dimension.width/dimension.length*dimension.aspect;
+        const innerWidth = width - 2*pitchProps["margin"];
+        const innerHeight = height - 2*pitchProps["margin"];
+        var scX = d3.scaleLinear().domain([0, dimension.length]).range([ 0, innerWidth ])
+        var scY = dimension.invert_y
+                    ? d3.scaleLinear().domain([0, dimension.width]).range([ 0, innerHeight ])
+                    : d3.scaleLinear().domain([dimension.width, 0]).range([ 0, innerHeight ])
+        
+        function generateArray(start, stop, length) {
+            const step = (stop - start) / (length - 1);
+            return Array.from({ length }, (_, i) => start + i * step);
+        }
+        const xBins = d3.histogram()
+            .value(d => d["location"][0])
+            .domain([0, dimension.length])
+            .thresholds(generateArray(0, dimension.length + 0.1, 11))
+            (playerPasses);
+        
+        xBins.forEach(bin => {
+            bin.yBins = d3.histogram()
+                .value(d => d.location[1]) // Use the y-coordinate
+                .domain(scY.domain())
+                .thresholds(generateArray(0, dimension.width + 0.1, 11)) // Number of bins
+                (bin);
+        });
+
+        const heatmapsData = []
+        xBins.forEach(xBin => {
+            xBin.yBins.forEach(yBin => {
+                const filteredData = Object.keys(yBin)
+                    .filter(key => !isNaN(key))
+                    .reduce((obj, key) => {
+                        obj[key] = yBin[key];
+                        return obj;
+                    }, []);
+
+                if (yBin.length > 0) {
+                    const xTotal = filteredData.reduce((accumulator, currentItem) => accumulator + currentItem["pass"]["end_location"][0], 0);
+                    const yTotal = filteredData.reduce((accumulator, currentItem) => accumulator + currentItem["pass"]["end_location"][1], 0);
+                    const averageX = xTotal / yBin.length;
+                    const averageY = yTotal / yBin.length;
+                    heatmapsData.push({
+                        x0: xBin.x0,
+                        x1: xBin.x1,
+                        y0: yBin.x0,
+                        y1: yBin.x1,
+                        count: yBin.length,
+                        averageX: averageX,
+                        averageY: averageY
+                    });
+                } else {
+                    heatmapsData.push({
+                        x0: xBin.x0,
+                        x1: xBin.x1,
+                        y0: yBin.x0,
+                        y1: yBin.x1,
+                        count: yBin.length,
+                        averageX: undefined,
+                        averageY: undefined
+                    });
+                }
+            });
+        });
+
+        const colorScale = d3.scaleSequential(d3.interpolateRgb("white", "red"))
+            .domain([0, d3.max(heatmapsData, d => d.count)]);
+
+        const heatmapsSvg = svg.append("g").attr("class", "heatmaps").attr("transform", `translate(${pitchProps.margin}, ${pitchProps.margin})`)
+
+        heatmapsSvg.append("g")
+            .selectAll("rect")
+            .data(heatmapsData)
+            .join("rect")
+                .attr("x", d => scX(d.x0))
+                .attr("y", d => scY(d.y0))
+                .attr("width", d => scX(d.x1 - d.x0))
+                .attr("height", d => scY(d.y1 - d.y0))
+                .attr("fill", d => colorScale(d.count))
+                .attr("opacity", 0.8)
+                .attr("stroke", "black")
+                .attr("stroke-width", 0.05);
+        const heatmapsBin = heatmapsSvg.append("g").selectAll("g")
+            .data(heatmapsData)
+            .join("g")
+        heatmapsBin
+            .append("path")
+                .attr("d", d => 
+                    `M${scX(d.x0 + ((d.x1-d.x0)/2))} ${scY(d.y0 + (d.y1-d.y0)/2)}
+                    ${d.averageX !== undefined ? 'L' + scX(d.averageX) + ' ' + scY(d.averageY) : ''}`)
+                .attr("stroke", "black")
+                .attr("stroke-width", 1)
+
+        var arrowLength = 1;
+            function angle(x1, y1, x2, y2) {
+                var dx = x2 - x1;
+                var dy = y2 - y1;
+                var angle = Math.atan2(dy, dx)
+                var baseLeftX = x2 - arrowLength * Math.cos(angle - Math.PI / 6)
+                var baseLeftY = y2 - arrowLength * Math.sin(angle - Math.PI / 6)
+                var baseRightX = x2 - arrowLength * Math.cos(angle + Math.PI / 6)
+                var baseRightY = y2 - arrowLength * Math.sin(angle + Math.PI / 6)
+                
+                return ({
+                    'baseLeftX': baseLeftX,
+                    'baseLeftY': baseLeftY,
+                    'baseRightX': baseRightX,
+                    'baseRightY': baseRightY
+                })
+            }
+        
+        heatmapsBin
+            .append("path")
+                .attr( 'd', d => {
+                    const startX = d.x0 + (d.x1-d.x0)/2;
+                    const startY = d.y0 + (d.y1-d.y0)/2;
+                    const endX = d.averageX;
+                    const endY = d.averageY;
+                    const baseLeftX = angle(startX, startY, endX, endY)['baseLeftX']
+                    const baseLeftY = angle(startX, startY, endX, endY)['baseLeftY']
+                    const baseRightX = angle(startX, startY, endX, endY)['baseRightX']
+                    const baseRightY = angle(startX, startY, endX, endY)['baseRightY']
+                    return `M ${scX(endX)}, ${scY(endY)} L ${scX(baseLeftX)}, ${scY(baseLeftY)} L${scX(baseRightX)}, ${scY(baseRightY)} `
+                })
+                .attr("fill", "black")
+
+
+        Pitch(pitchProps)
+    }, [setNumberPlayerPasses, passes, playerNamePassesHeatmaps])
+
+
     return (
         <div>
             <div className='analytics-container'>
@@ -648,6 +790,24 @@ function Analytics(props) {
                 <div className='heatmaps-container'>
                     <div>
                         <svg ref={heatmapsRef} fill='none' className='pitch' />
+                    </div>
+                </div>
+            </div>
+            <div className='analytics-container'>
+                <div className='header'>
+                    <div className='title'>Player Passes Heatmaps</div >
+                    <div className='player-input'>
+                        <select value={playerNamePassesHeatmaps} onChange={(event) => setPlayerNamePassesHeatmaps(event.target.value)}>
+                            {allPlayersPlay.map((player) => (
+                                <option value={player.player_name}>{player.player_name}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+                <div className='heatmaps-container'>
+                    <div>
+                        <p>{playerNamePassesHeatmaps} has {numberPlayerPasses} Passes</p>
+                        <svg ref={playerPassHeatmapsRef} fill='none' className='pitch' />
                     </div>
                 </div>
             </div>
