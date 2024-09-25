@@ -2,19 +2,29 @@ import React, { useEffect, useRef, useState } from 'react'
 import Pitch from './Pitch';
 import * as d3 from 'd3';
 import { Button, ButtonGroup, Col, Form, Row } from 'react-bootstrap';
+import '../../styles/match/Events.css';
 
 function Events(props) {
-    const { matchData, lineupsData, eventsData } = props;
+    const { matchData, lineupsData, eventsData, threeSixtyData } = props;
     const chalkboardRef = useRef();
 
     const homeTeamName = matchData.home_team.home_team_name;
     const awayTeamName = matchData.away_team.away_team_name;
-
+    
+    const [homeAway, setHomeAway] = useState('home')
     const [homeSelectAllCheck, setHomeSelectAllCheck] = useState(true);
     const [awaySelectAllCheck, setAwaySelectAllCheck] = useState(true);
     const [homePlayersPlay, setHomePlayersPlay] = useState([]);
     const [awayPlayersPlay, setAwayPlayersPlay] = useState([]);
-    const [eventShow, setEventShow] = useState('shot')
+    const [eventShow, setEventShow] = useState('shot');
+    const [eventClick, setEventClick] = useState(false);
+    const listPlayersPlay = homeAway === 'home' ? homePlayersPlay : awayPlayersPlay;
+
+    const handleEventClickOut = () => {
+        setEventClick(false);
+        d3.select(chalkboardRef.current).select(".events").selectAll("*").attr("opacity", 1)
+        d3.select(chalkboardRef.current).select(".three-sixty").remove();
+    }
 
     const handleHomeCheckBox = (id) => {
         setHomePlayersPlay((homePlayersPlay) => homePlayersPlay.map((player) => 
@@ -70,18 +80,65 @@ function Events(props) {
         svg.selectAll("*").remove()
         // Make Pitch
         const id = 'chalkboard';
-        const width = 800
+        const width = 900
         const pitchProps = {
             svgRef: chalkboardRef,
             width: width,
-            margin: width/40,
+            margin: {
+                top: width/20,
+                left: width/40,
+                right: width/40,
+                bottom: width/10
+            },
             pitch_dimension: 'statsbomb',
             background: 'white',
             line_color: 'grey'
-        };
-        
+        };        
         Pitch(pitchProps)
 
+        const dimensions = require('../../data/dimensions.json')
+        const dimension = dimensions["statsbomb"]
+        const innerWidth = width - pitchProps.margin.left - pitchProps.margin.right;
+        const innerHeight = innerWidth * dimension.width/dimension.length*dimension.aspect;
+        const height = pitchProps.margin.top + innerHeight + pitchProps.margin.bottom;
+
+        var scX = d3.scaleLinear().domain([0, dimension.length]).range([ 0, width - pitchProps.margin.left - pitchProps.margin.right ])
+        var scY = dimension.invert_y
+                    ? d3.scaleLinear().domain([0, dimension.width]).range([ 0, innerHeight ])
+                    : d3.scaleLinear().domain([dimension.width, 0]).range([ 0, innerHeight ])
+        var scXG = d3.scaleLog().domain([ 1, 10 ]).range([ 5, 12 ])
+        const color = 'blue';
+
+        // Make Direction of Attack
+        const attackingDirection = svg.append("g").attr("class", "direction-of-attack").attr("transform", `translate(${pitchProps.margin.left}, ${pitchProps.margin.top})`)
+        attackingDirection.append("path")
+            .attr("d",
+                `M${innerWidth/2 - innerWidth/4} ${innerHeight + pitchProps.margin.bottom*1/3}
+                L${innerWidth/2 + innerWidth/4} ${innerHeight + pitchProps.margin.bottom*1/3}`)
+            .attr("stroke", "grey")
+            .attr("stroke-width", 2)
+        
+        attackingDirection.append("path")
+            .attr("d", `
+                    M${innerWidth/2 + innerWidth/4} ${innerHeight + pitchProps.margin.bottom*1/3}
+                    L${innerWidth/2 + innerWidth/4 - 15} ${innerHeight + pitchProps.margin.bottom*1/3 + 10}
+                    L${innerWidth/2 + innerWidth/4 - 15} ${innerHeight + pitchProps.margin.bottom*1/3 - 10}
+                    L${innerWidth/2 + innerWidth/4 } ${innerHeight + pitchProps.margin.bottom*1/3}
+                `)
+            .attr("fill", "grey ")
+            .attr("stroke", "grey")
+            .attr("stroke-width", 2);
+
+        attackingDirection
+            .append("text")
+                .attr("transform", `translate(${innerWidth*1/2}, ${innerHeight + pitchProps.margin.bottom*2/3})`)
+                .text(`Direction of Attack`)
+                .attr("fill", "grey")
+                .attr("text-anchor", "middle")
+                .attr("font-size", "20px");
+
+
+        // Data for Event Filter Player
         const player_ids = [];
         for (const player in homePlayersPlay) {
             if (homePlayersPlay[player]["isChecked"]) {
@@ -99,40 +156,35 @@ function Events(props) {
         const interceptions = eventsData.filter(event => event.type.name === 'Interception');
         const clearances = eventsData.filter(event => event.type.name === 'Clearance');
         const duel = eventsData.filter(event => event.type.name === 'Duel');
+        const dribble = eventsData.filter(event => event.type.name === 'Dribble');
+        const defensiveAction = eventsData.filter(event => (event.type.name === 'Interception') || (event.type.name === 'Clearance') || (event.type.name === 'Duel') || (event.type.name === 'Ball Recovery') || (event.type.name === 'Block') || (event.type.name === 'Foul Committed') || (event.type.name === '50/50'));
+        console.log(dribble)
 
-        const data = eventShow === 'shot' ? shot : eventShow === 'pass' ? pass : eventShow === 'interception' ? interceptions : eventShow === 'clearance' ? clearances : eventShow === 'duel' ? duel : shot;
-        const filteredData = data.filter(event => player_ids.includes(event.player.id));
-
-        const dimensions = require('../../data/dimensions.json')
-        const dimension = dimensions["statsbomb"]
-        const height = width * dimension.width/dimension.length*dimension.aspect
-        var scX = d3.scaleLinear().domain([0, dimension.length]).range([ 0, width - 2*pitchProps["margin"] ])
-        var scY = dimension.invert_y
-                    ? d3.scaleLinear().domain([0, dimension.width]).range([ 0, width * dimension.width/dimension.length*dimension.aspect - 2*pitchProps["margin"] ])
-                    : d3.scaleLinear().domain([dimension.width, 0]).range([ 0, width * dimension.width/dimension.length*dimension.aspect - 2*pitchProps["margin"] ])
-        var scXG = d3.scaleLinear().domain([ 0, 1 ]).range([ 4, 20 ])
-        const color = 'blue';
-
-        function homeAwayLocationX(x, team) {
-            return team === homeTeamName ? x : dimension.length - x
-        }
-        function homeAwayLocationY(y, team) {
-            return team === homeTeamName ? y : dimension.width - y
-        }
-
+        const data = eventShow === 'shot' ? shot : eventShow === 'pass' ? pass : eventShow === 'interception' ? interceptions : eventShow === 'clearance' ? clearances : eventShow === 'duel' ? duel : eventShow === 'dribble' ? dribble : shot;
+        const filteredData = data.filter(event => player_ids.includes(event.player.id) && event.team.name === (homeAway === 'home' ? homeTeamName : awayTeamName));
+        
         const events = d3.select(chalkboardRef.current)
             .append("g")
-                .attr("transform", `translate(${pitchProps.margin}, ${pitchProps.margin})`)
+                .attr("transform", `translate(${pitchProps.margin.left}, ${pitchProps.margin.top})`)
                 .attr("class", "events")
 
         if (eventShow === 'shot') {
+            const shotFormatsInfo = [
+                {id: 'Goal', label: "Goal", color: "#e63946", count: filteredData.filter(d => d.shot.outcome.name === 'Goal').length},
+                {id: 'Saved', label: "Saved", color: "#ffbe0b", count: filteredData.filter(d => d.shot.outcome.name === 'Saved').length},
+                {id: 'Post', label: "Hit Post", color: "black", count: filteredData.filter(d => d.shot.outcome.name === 'Post').length},
+                {id: 'Blocked', label: "Blocked", color: "#457b9d", count: filteredData.filter(d => d.shot.outcome.name === 'Blocked').length},
+                {id: 'Off T', label: "Off Target", color: "#f1faee", count: filteredData.filter(d => (d.shot.outcome.name !== 'Goal') && (d.shot.outcome.name !== 'Saved') && (d.shot.outcome.name !== 'Post') && (d.shot.outcome.name !== 'Blocked')).length}
+            ]
+
             var event = events.selectAll(".event-group")
                 .data(filteredData)
-                .enter().append("g")
-                .attr("class", "event-group")
-                .attr("transform", function(d) { return `translate(${scX(d['team']['name'] === homeTeamName ? d['location'][0] : dimension.length - d['location'][0])}, ${scY(d['team']['name'] === homeTeamName ? d['location'][1] : dimension.width - d['location'][1])})`})
+                .join("g")
+                    .attr("class", "event-group")
+                    .attr("transform", function(d) { return `translate(${scX(d['location'][0])}, ${scY(d['location'][1])})`})
+
+            event
                 .on("mouseover", function(mouseEvent, d) {
-                    console.log(d)
                     
                     // event.select("circle").attr("r", 10)
                     tooltipContent.attr("transform", `translate(${d.team.name === homeTeamName ? -20-300 + 20 : 40}, 0)`)
@@ -148,14 +200,13 @@ function Events(props) {
                     tooltipContent.append("text").text(`Body Part: ${d.shot.body_part.name}`).attr("y", 120)
                     // tooltipContent.append("text").text(`: `).attr("y", 60)
 
-
                     tooltipBackground
                         .attr("x", d.team.name === homeTeamName ? -20-300 : 20)
                         .attr("y", -75)
                         .attr("width", 300)
                         .attr("height", 220)
                     tooltipWrapper
-                        .attr("transform", `translate(${pitchProps.margin + scX(d['team']['name'] === homeTeamName ? d['location'][0] : dimension.length - d['location'][0])}, ${pitchProps.margin + scY(d['team']['name'] === homeTeamName ? d['location'][1] : dimension.width - d['location'][1])})`)
+                        .attr("transform", `translate(${pitchProps.margin.left + scX(d['team']['name'] === homeTeamName ? d['location'][0] : dimension.length - d['location'][0])}, ${pitchProps.margin.top + scY(d['team']['name'] === homeTeamName ? d['location'][1] : dimension.width - d['location'][1])})`)
                     tooltipWrapper
                         .transition().duration(400)
                         .style("opacity", 1)
@@ -171,37 +222,121 @@ function Events(props) {
                     tooltipContent
                         .transition().duration(200).selectAll("*").remove()
                 })
-            
+                
             event
-                .append( "line" ).attr( 'stroke', color )
+                .on("click", function(mouseEvent, d) {
+                    if (!eventClick) {
+                        setEventClick(true);
+                        events.selectAll("*").attr("opacity", 0);
+                        event.attr("opacity", 1);
+                        d3.select(this).selectAll("*").attr("opacity", 1);
+                        const eventThreeSixty = threeSixtyData.find(threeSixty => threeSixty.event_uuid === d.id);
+                        const threeSixty = svg.append("g").attr("class", "three-sixty")
+                        threeSixty
+                            .selectAll("circle")
+                            .data(eventThreeSixty.freeze_frame)
+                                .join("circle")
+                                    .attr("cx", d => scX(d.location[0]))
+                                    .attr("cy", d => scY(d.location[1]))
+                                    .attr("r", 5)
+                                    .attr("stroke", d => d.teammate ? "blue" : "red")
+                                    .attr("stroke-width", 2)
+                                    .attr("fill", d => d.keeper ? "red" : "none")
+                }})
+            event
+                .append( "line" )
                     .attr( 'x1', 0 )
                     .attr( 'y1', 0 )
-                    .attr( 'x2', d => scX(d['team']['name'] === homeTeamName ? d['shot']['end_location'][0] - d['location'][0] : d['location'][0] - d['shot']['end_location'][0]) )
-                    .attr( 'y2', d => scY(d['team']['name'] === homeTeamName ? d['shot']['end_location'][1] - d['location'][1] : d['location'][1] - d['shot']['end_location'][1] ) )
-
-            // events.selectAll( "line" )
-            //     .data( filteredData ).enter()
-            //     .append( "line" ).attr( 'stroke', color )
-            //         .attr( 'x1', d => scX(d['team']['name'] === homeTeamName ? d['location'][0] : dimension.length - d['location'][0]) )
-            //         .attr( 'y1', d => scY(d['team']['name'] === homeTeamName ? d['location'][1] : dimension.width - d['location'][1]) )
-            //         .attr( 'x2', d => scX(d['team']['name'] === homeTeamName ? d['shot']['end_location'][0] : dimension.length - d['shot']['end_location'][0] ) )
-            //         .attr( 'y2', d => scY(d['team']['name'] === homeTeamName ? d['shot']['end_location'][1] : dimension.width - d['shot']['end_location'][1] ) )
-            
+                    .attr( 'x2', d => scX(d['shot']['end_location'][0] - d['location'][0]) )
+                    .attr( 'y2', d => scY(d['shot']['end_location'][1] - d['location'][1]) )
+                    .attr( 'stroke', d => 
+                        d['shot']['outcome']['name'] === 'Goal' ? shotFormatsInfo.find(d => d.id === 'Goal').color
+                        : d.shot.outcome.name === 'Saved' ? shotFormatsInfo.find(d => d.id === 'Saved').color
+                        : d.shot.outcome.name === 'Post' ? shotFormatsInfo.find(d => d.id === 'Post').color
+                        : d.shot.outcome.name === 'Blocked' ? "blue"
+                        : "blue"
+                    )
             event
                 .append("circle")
                 .attr("class", "event-event")
-                .attr("r", d => scXG(d['shot']['statsbomb_xg']))
-                .style("fill", d => d['shot']['outcome']['name'] === 'Goal' ? 'grey' : color)
-        
-            // events.selectAll( "line" )
-                // .data( filteredData ).enter()
-                // .append( "line" ).attr( 'stroke', color )
-                //     .attr( 'x1', d => scX(d['team']['name'] === homeTeamName ? d['location'][0] : dimension.length - d['location'][0]) )
-                //     .attr( 'y1', d => scY(d['team']['name'] === homeTeamName ? d['location'][1] : dimension.width - d['location'][1]) )
-                //     .attr( 'x2', d => scX(d['team']['name'] === homeTeamName ? d['shot']['end_location'][0] : dimension.length - d['shot']['end_location'][0] ) )
-                //     .attr( 'y2', d => scY(d['team']['name'] === homeTeamName ? d['shot']['end_location'][1] : dimension.width - d['shot']['end_location'][1] ) )
+                .attr("r", d => scXG(d['shot']['statsbomb_xg'] > 0.1 ? d['shot']['statsbomb_xg']*10 : 1))
+                .attr("stroke", "blue")
+                .attr("stroke-width", 1.5)
+                .attr("fill", d => 
+                    d['shot']['outcome']['name'] === 'Goal' ? shotFormatsInfo.find(d => d.id === 'Goal').color
+                    : d.shot.outcome.name === 'Saved' ? shotFormatsInfo.find(d => d.id === 'Saved').color
+                    : d.shot.outcome.name === 'Post' ? shotFormatsInfo.find(d => d.id === 'Post').color
+                    : d.shot.outcome.name === 'Blocked' ? shotFormatsInfo.find(d => d.id === 'Blocked').color
+                    : shotFormatsInfo.find(d => d.id === 'Off T').color
+                );
+            // Legend
+            const shotLegend = svg
+                .append("g")
+                    .attr("transform", `translate(${pitchProps.margin.left}, 0)`)
+                    .attr("class", "legend")
+                .selectAll(".legend-item")
+                .data(shotFormatsInfo)
+                .join("g")
+                    .attr("class", "legend-item")
+            var legendTextWidth = []
+            shotLegend
+                .append("text")
+                    .text(d => `${d.label}: ${d.count}`)
+                    .each(function(d, i) {
+                        legendTextWidth.push(this.getComputedTextLength());
+                        this.remove();
+                    })
+
+            const legendPosition = []
+            legendTextWidth.forEach((textWidth, index) => {
+                if (index === 0) {
+                    return legendPosition.push(0)
+                } else if (index === 1) {
+                    return legendPosition.push(legendTextWidth[index-1] + 60)
+                } else {
+                    const sliceTextWidth = legendTextWidth.slice(0, index);
+                    const sumSlice = sliceTextWidth.reduce((a, b) => a + b, 0);
+                    return legendPosition.push(sumSlice + 60*index)
+                }
+            })
+            shotLegend.attr("transform", (d, i) => `translate(${legendPosition[i]})`)
+            shotLegend
+                .append("text")
+                    .text(d => `${d.label}: ${d.count}`)
+                    .attr("x", 20)
+                    .attr("y", pitchProps.margin.top/2)
+                    .attr("fill", "black")
+                    .attr("dominant-baseline", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+            // shotLegend
+            //     .append("circle")
+            //         .attr("cx", 0)
+            //         .attr("cy", pitchProps.margin.top/2-2)
+            //         .attr("r", 8)
+            //         .attr("fill", d => d.color)
+            //         .attr("stroke", "blue")
+            //         .attr("stroke-width", 2)
+            shotLegend
+                .append("rect")
+                    .attr("x", 0)
+                    .attr("y", pitchProps.margin.top/2 - 15/2 - 3)
+                    .attr("rx", 3)
+                    .attr("width", 15)
+                    .attr("height", 15)
+                    .attr("r", 8)
+                    .attr("fill", d => d.color)
+                    .attr("stroke", "blue")
+                    .attr("stroke-width", 0.5)
 
         } else if (eventShow === 'pass') {
+            const passFormatsInfo = [
+                {id: 'goal_assist', label: "Assist", color: "#219ebc", count: filteredData.filter(d => 'goal_assist' in d.pass).length},
+                {id: 'shot_assist', label: "Chance Created", color: "#dda15e", count: filteredData.filter(d => 'shot_assist' in d.pass && !('goal_assist' in d.pass)).length},
+                {id: 'successful', label: "Successful", color: "blue", count: filteredData.filter(d => !('outcome' in d.pass) && !('goal_assist' in d.pass) && !('shot_assist' in d.pass)).length},
+                {id: 'unsuccessful', label: "Unsuccessful", color: "red", count: filteredData.filter(d => 'outcome' in d.pass).length},
+            ]
+
             var arrowLength = 1;
             function angle(x1, y1, x2, y2) {
                 var dx = x2 - x1;
@@ -220,16 +355,32 @@ function Events(props) {
                 })
             }
 
-            events.selectAll( "line" )
-                .data( filteredData ).enter()
-                .append( "line" ).attr( 'stroke', d => d['team']['name'] === homeTeamName ? color : 'red' ).attr("stroke-width", 1.5)
-                .attr( 'x1', d => scX(d['team']['name'] === homeTeamName ? d['location'][0] : dimension.length - d['location'][0]) )
-                .attr( 'y1', d => scY(d['team']['name'] === homeTeamName ? d['location'][1] : dimension.width - d['location'][1]) )
-                .attr( 'x2', d => scX(homeAwayLocationX(d['pass']['end_location'][0], d['team']['name'] )) )
-                .attr( 'y2', d => scY(homeAwayLocationY(d['pass']['end_location'][1], d['team']['name'])) )
-                .on("mouseover", function(mouseEvent, d) {
-                    console.log(d)
+            var passEvent = events.selectAll(".event-group-passes")
+                .data(filteredData)
+                .join("g")
+                    .attr("class", "event-group")
+                    .attr("stroke", d =>
+                        ('goal_assist' in d["pass"]) ? passFormatsInfo.find(d => d.id === 'goal_assist').color
+                        : ('shot_assist' in d["pass"]) ? passFormatsInfo.find(d => d.id === 'shot_assist').color
+                        : !('outcome' in d["pass"]) ? passFormatsInfo.find(d => d.id === 'successful').color
+                        : passFormatsInfo.find(d => d.id === 'unsuccessful').color
+                    )
+                    .attr("fill", d => 
+                        ('goal_assist' in d["pass"]) ? passFormatsInfo.find(d => d.id === 'goal_assist').color
+                        : ('shot_assist' in d["pass"]) ? passFormatsInfo.find(d => d.id === 'shot_assist').color
+                        : !('outcome' in d["pass"]) ? passFormatsInfo.find(d => d.id === 'successful').color
+                        : passFormatsInfo.find(d => d.id === 'unsuccessful').color
+                    )
 
+            passEvent
+                .append( "line" )
+                    .attr("stroke-width", 1.5)
+                    .attr( 'x1', d => scX(d['location'][0]) )
+                    .attr( 'y1', d => scY(d['location'][1]) )
+                    .attr( 'x2', d => scX(d['pass']['end_location'][0]) )
+                    .attr( 'y2', d => scY(d['pass']['end_location'][1]) )
+            passEvent
+                .on("mouseover", function(mouseEvent, d) {
                     let y = -50
                     const marginRow = 25
                     let row = 5
@@ -255,13 +406,14 @@ function Events(props) {
                         .attr("height", backgroundHeight)
                     tooltipWrapper
                         .attr("transform", `translate(
-                            ${mouseEvent.offsetX < width - pitchProps.margin - 300 ? mouseEvent.offsetX : mouseEvent.offsetX - 300 - 40 },
-                            ${mouseEvent.offsetY < 75+20 ? 75+20 : mouseEvent.offsetY > height - pitchProps.margin - backgroundHeight ? height - pitchProps.margin - backgroundHeight + 75 : mouseEvent.offsetY}
+                            ${mouseEvent.offsetX < width - pitchProps.margin.left - 300 ? mouseEvent.offsetX : mouseEvent.offsetX - 300 - 40 },
+                            ${mouseEvent.offsetY < 75+20 ? 75+20 : mouseEvent.offsetY > height - pitchProps.margin.top - backgroundHeight ? height - pitchProps.margin.top - backgroundHeight + 75 : mouseEvent.offsetY}
                         )`)
                     tooltipWrapper
                         .transition().duration(200)
                         .style("opacity", 1)
                 })
+            passEvent
                 .on("mouseout", function(d) {
                     tooltipWrapper
                         .transition().duration(200)
@@ -272,31 +424,103 @@ function Events(props) {
                     tooltipContent
                         .transition().duration(200).selectAll("*").remove()
                 })
-                
-            events.selectAll('path')
-                .data( filteredData ).enter()
-                .append('path').attr( 'fill', d => d['team']['name'] === homeTeamName ? color : 'red' )
+            passEvent
+                .on("click", function(mouseEvent, d) {
+                    if (!eventClick) {
+                        setEventClick(true);
+                        events.selectAll("*").attr("opacity", 0);
+                        d3.select(this).attr("opacity", 1);
+                        d3.select(this).selectAll("*").attr("opacity", 1);
+                        d3.select(chalkboardRef.current).select(".tooltip-wrapper").selectAll("*").attr("opacity", 0)
+                        const eventThreeSixty = threeSixtyData.find(threeSixty => threeSixty.event_uuid === d.id);
+                        const threeSixty = svg.append("g").attr("class", "three-sixty")
+                        threeSixty
+                            .selectAll("circle")
+                            .data(eventThreeSixty.freeze_frame)
+                                .join("circle")
+                                    .attr("cx", d => scX(d.location[0]))
+                                    .attr("cy", d => scY(d.location[1]))
+                                    .attr("r", 5)
+                                    .attr("stroke", d => d.teammate ? "blue" : "red")
+                                    .attr("stroke-width", 2)
+                                    .attr("fill", d => d.keeper ? "red" : "none")
+                    }
+                })
+            passEvent
+                .append('path')
                 .attr( 'd', d => {
-                    const startX = homeAwayLocationX(d['location'][0], d['team']['name'])
-                    const startY = homeAwayLocationY(d['location'][1], d['team']['name'])
-                    const endX = homeAwayLocationX(d['pass']['end_location'][0], d['team']['name'])
-                    const endY = homeAwayLocationY(d['pass']['end_location'][1], d['team']['name'])
+                    const startX = d['location'][0]
+                    const startY = d['location'][1]
+                    const endX = d['pass']['end_location'][0]
+                    const endY = d['pass']['end_location'][1]
                     const baseLeftX = angle(startX, startY, endX, endY)['baseLeftX']
                     const baseLeftY = angle(startX, startY, endX, endY)['baseLeftY']
                     const baseRightX = angle(startX, startY, endX, endY)['baseRightX']
                     const baseRightY = angle(startX, startY, endX, endY)['baseRightY']
                     return `M ${scX(endX)}, ${scY(endY)} L ${scX(baseLeftX)}, ${scY(baseLeftY)} L${scX(baseRightX)}, ${scY(baseRightY)}`
                 })
+
+            // Legend
+            const passLegend = svg
+                .append("g")
+                    .attr("transform", `translate(${pitchProps.margin.left}, 0)`)
+                    .attr("class", "legend")
+                .selectAll(".legend-item")
+                .data(passFormatsInfo)
+                .join("g")
+                    .attr("class", "legend-item")
+            var passLegendTextWidth = []
+            passLegend
+                .append("text")
+                    .text(d => `${d.label}: ${d.count}`)
+                    .each(function(d, i) {
+                        passLegendTextWidth.push(this.getComputedTextLength());
+                        this.remove();
+                    })
+
+            const legendPosition = []
+            passLegendTextWidth.forEach((textWidth, index) => {
+                if (index === 0) {
+                    return legendPosition.push(0)
+                } else if (index === 1) {
+                    return legendPosition.push(passLegendTextWidth[index-1] + 60)
+                } else {
+                    const sliceTextWidth = passLegendTextWidth.slice(0, index);
+                    const sumSlice = sliceTextWidth.reduce((a, b) => a + b, 0);
+                    return legendPosition.push(sumSlice + 60*index)
+                }
+            })
+            passLegend.attr("transform", (d, i) => `translate(${legendPosition[i]})`)
+            passLegend
+                .append("text")
+                    .text(d => `${d.label}: ${d.count}`)
+                    .attr("x", 20)
+                    .attr("y", pitchProps.margin.top/2)
+                    .attr("fill", "black")
+                    .attr("dominant-baseline", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+            passLegend
+                .append("rect")
+                    .attr("x", 0)
+                    .attr("y", pitchProps.margin.top/2 - 15/2 - 3)
+                    .attr("rx", 3)
+                    .attr("width", 15)
+                    .attr("height", 15)
+                    .attr("r", 8)
+                    .attr("fill", d => d.color)
+                    // .attr("stroke", "blue")
+                    .attr("stroke-width", 0.5)
+
         } else if (eventShow === 'interception' || eventShow === 'clearance' || eventShow === 'duel') {
             events.selectAll( "circle" )
                 .data( filteredData )
                 .enter()
                 .append( "circle" )
                     .attr( 'r', 5 ).attr( 'fill', d => d['team']['name'] === homeTeamName ? color : 'red' )
-                    .attr( 'cx', d => scX(homeAwayLocationX(d['location'][0], d['team']['name'])) )
-                    .attr( 'cy', d => scY(homeAwayLocationY(d['location'][1], d['team']['name'])) )
+                    .attr( 'cx', d => scX(d['location'][0]) )
+                    .attr( 'cy', d => scY(d['location'][1]) )
                     .on("mouseover", function(mouseEvent, d) {
-                        console.log(d)
     
                         let y = -50
                         const marginRow = 25
@@ -319,8 +543,8 @@ function Events(props) {
                         tooltipWrapper
                             .transition().duration(200)
                             .attr("transform", `translate(
-                                ${mouseEvent.offsetX < width - pitchProps.margin - 300 ? mouseEvent.offsetX : mouseEvent.offsetX - 300 - 40 },
-                                ${mouseEvent.offsetY < 75+20 ? 75+20 : mouseEvent.offsetY > height - pitchProps.margin - backgroundHeight ? height - pitchProps.margin - backgroundHeight + 75 : mouseEvent.offsetY}
+                                ${mouseEvent.offsetX < width - pitchProps.margin.left - 300 ? mouseEvent.offsetX : mouseEvent.offsetX - 300 - 40 },
+                                ${mouseEvent.offsetY < 75+20 ? 75+20 : mouseEvent.offsetY > height - pitchProps.margin.top - backgroundHeight ? height - pitchProps.margin.top - backgroundHeight + 75 : mouseEvent.offsetY}
                             )`)
                             .style("opacity", 1)
                     })
@@ -334,6 +558,74 @@ function Events(props) {
                         tooltipContent
                             .transition().duration(200).selectAll("*").remove()
                     })
+        } else if (eventShow === 'dribble') {
+            const dribbleFormatsInfo = [
+                {id: 'complete', label: "Successful", color: "blue", count: filteredData.filter(d => d.dribble.outcome.name === 'Complete').length},
+                {id: 'incomplete', label: "Unsuccessful", color: "red", count: filteredData.filter(d => d.dribble.outcome.name === 'Incomplete').length},
+            ]
+            const event = events.selectAll(".event-group")
+                .data(filteredData)
+                .join("g")
+                    .attr("class", "event-group")
+            event.append("circle")
+                .attr("cx", d => scX(d.location[0]))
+                .attr("cy", d => scY(d.location[1]))
+                .attr("r", 8)
+                // .attr("stroke", "red")
+                // .attr("stroke-width", 3)
+                .attr("fill", d => d.dribble.outcome.name === 'Complete' ? "blue" : "red");
+
+            // Legend
+            const Legend = svg
+                .append("g")
+                    .attr("transform", `translate(${pitchProps.margin.left}, 0)`)
+                    .attr("class", "legend")
+                .selectAll(".legend-item")
+                .data(dribbleFormatsInfo)
+                .join("g")
+                    .attr("class", "legend-item")
+            var dribbleLegendTextWidth = []
+            Legend
+                .append("text")
+                    .text(d => `${d.label}: ${d.count}`)
+                    .each(function(d, i) {
+                        dribbleLegendTextWidth.push(this.getComputedTextLength());
+                        this.remove();
+                    })
+
+            const legendPosition = []
+            dribbleLegendTextWidth.forEach((textWidth, index) => {
+                if (index === 0) {
+                    return legendPosition.push(0)
+                } else if (index === 1) {
+                    return legendPosition.push(dribbleLegendTextWidth[index-1] + 60)
+                } else {
+                    const sliceTextWidth = dribbleLegendTextWidth.slice(0, index);
+                    const sumSlice = sliceTextWidth.reduce((a, b) => a + b, 0);
+                    return legendPosition.push(sumSlice + 60*index)
+                }
+            })
+            Legend.attr("transform", (d, i) => `translate(${legendPosition[i]})`)
+            Legend
+                .append("text")
+                    .text(d => `${d.label}: ${d.count}`)
+                    .attr("x", 20)
+                    .attr("y", pitchProps.margin.top/2)
+                    .attr("fill", "black")
+                    .attr("dominant-baseline", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+            Legend
+                .append("rect")
+                    .attr("x", 0)
+                    .attr("y", pitchProps.margin.top/2 - 15/2 - 3)
+                    .attr("rx", 3)
+                    .attr("width", 15)
+                    .attr("height", 15)
+                    .attr("r", 8)
+                    .attr("fill", d => d.color)
+                    // .attr("stroke", "blue")
+                    .attr("stroke-width", 0.5)
         }
 
         
@@ -353,69 +645,95 @@ function Events(props) {
             .attr("class", "tooltip-content")
             // .attr("transform", "translate(40, 0)")
 
-    }, [eventsData, homeTeamName, chalkboardRef, homePlayersPlay, awayPlayersPlay, eventShow])
+    }, [eventsData, homeTeamName, awayTeamName, chalkboardRef, homePlayersPlay, awayPlayersPlay, eventShow, threeSixtyData, homeAway])
+
+    // const shotFormatsInfo = [
+    //     {label: "Goal", color: "red"},
+    //     {label: "Shot On Target", color: "#202020"},
+    //     {label: "Shot Off Target", color: "white"}
+    // ]
+    // const passFormatsInfo = [
+    //     {label: "Successful", color: "blue"}
+    // ]
+    // d3.select(".legend-container").selectAll("*").remove()
+    // const legendItems = d3.select(".legend-container")
+    //             .append("ul")
+    //                 .attr("class", "color-legend")
+    //             .selectAll(".color-legend-item")
+    //             .data(shotFormatsInfo)
+    //             .join("li")
+    //                 .attr("class", "color-legend-item")
+    //         legendItems
+    //             .append("span")
+    //                 .attr("class", "color-legend-item-color")
+    //                 .style("background-color", d => d.color)
+    //                 .style("border-color", "black")
+    //         legendItems
+    //             .append("span")
+    //                 .attr("class", "color-legend-item-label")
+    //                 .text(d => d.label)
 
 
     return (
-        <Row className='d-flex justify-content-center align-items-center flex-wrap'>
+        <Row className='d-flex justify-content-center'>
+            <div className='title d-flex justify-content-center mb-4'>
+                <span>Events Chalkboard</span>
+                    <ButtonGroup className='align-items-center ms-5'>
+                        <Button variant={`${homeAway === 'home' ? 'danger' : 'outline-danger'}`} onClick={() => setHomeAway('home')}>{homeTeamName}</Button>
+                        <Button variant={`${homeAway === 'away' ? 'danger' : 'outline-danger'}`} onClick={() => setHomeAway('away')}>{awayTeamName}</Button>
+                    </ButtonGroup>
+            </div>
 
-            <Col className='text-end align-items-start'>
-                <div className='m-1'>
-                    <Form>
-                        <Form.Check className='fw-bold'>
-                            Select All
-                            <Form.Check.Input
-                                type='radio'
-                                checked={homeSelectAllCheck}
-                                className='ms-3'
-                                onClick={() => hadleHomeSelectAllCheckBox()}
-                            />
-                        </Form.Check>
-                    </Form>
+            <Col sm={8}>
+                <div className='justify-content-center text-center'>
+                    <ButtonGroup>
+                        <Button variant={`${eventShow === 'shot' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('shot')}>Shot</Button>
+                        <Button variant={`${eventShow === 'pass' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('pass')}>Pass</Button>
+                        <Button variant={`${eventShow === 'dribble' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('dribble')}>Dribble</Button>
+                        <Button variant={`${eventShow === 'interception' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('interception')}>Interception</Button>
+                        <Button variant={`${eventShow === 'clearance' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('clearance')}>Clearance</Button>
+                        <Button variant={`${eventShow === 'duel' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('duel')}>Duel</Button>
+                    </ButtonGroup>
                 </div>
-                    {homePlayersPlay.map((player) => (
-                        <div key={player.player_id} className='m-1'>
-                            <Form>
-                                <Form.Check type='radio'>
-                                    {player.player_name}
-                                    <Form.Check.Input
-                                        type='radio'
-                                        checked={player["isChecked"]}
-                                        onClick={() => handleHomeCheckBox(player.player_id)}
-                                        className='ms-3'
-                                    />
-                                </Form.Check>
-                            </Form>
-                        </div>
-                    ))}
+                {/* <div className='legend-container'>
+                    <ul className='color-legend'>
+                        <li className='color-legend-item'>
+                            <span className='color-legend-item-color' style={{"background-color":"red"}}></span>
+                            <span className='color-legend-item-label'>Goal</span>
+                        </li>
+                        <li className='color-legend-item'>
+                            <span className='color-legend-item-color' style={{"background-color":"red"}}></span>
+                            <span className='color-legend-item-label'>Shot On Target</span>
+                        </li>
+                    </ul>
+                </div> */}
+                <div className='d-flex justify-content-center'>
+                    <svg ref={chalkboardRef} fill='none' />
+                </div>
             </Col>
 
-            <Col>
-                <svg ref={chalkboardRef} fill='none' />
-            </Col>
-
-            <Col className='text-start align-items-start'>
+            <Col  sm={3} className='text-start align-items-start player-checkbox'>
                 <div className='m-1'>
                     <Form>
-                        <Form.Check className='fw-bold' type='radio'>
+                        <Form.Check className='fw-bold checkbox-events' type='checkbox'>
                             <Form.Check.Input
-                                type='radio'
-                                checked={awaySelectAllCheck}
+                                type='checkbox'
+                                checked={homeAway === 'home' ? homeSelectAllCheck : awaySelectAllCheck}
                                 className='me-3'
-                                onClick={() => hadleAwaySelectAllCheckBox()}
+                                onClick={() => homeAway === 'home' ? hadleHomeSelectAllCheckBox() : hadleAwaySelectAllCheckBox()}
                             />
                             Select All
                         </Form.Check>
                     </Form>
                 </div>
-                {awayPlayersPlay.map((player) => (
+                {listPlayersPlay.map((player) => (
                     <div key={player.player_id} className='m-1'>
                         <Form>
-                            <Form.Check type='radio'>
+                            <Form.Check type='checkbox' className='checkbox-events'>
                                 <Form.Check.Input
-                                    type='radio'
+                                    type='checkbox'
                                     checked={player["isChecked"]}
-                                    onClick={() => handleAwayCheckBox(player.player_id)}
+                                    onClick={() => homeAway === 'home' ? handleHomeCheckBox(player.player_id) : handleAwayCheckBox(player.player_id)}
                                     className='me-3'
                                 />
                                 {player.player_name}
@@ -424,17 +742,9 @@ function Events(props) {
                     </div>
                 ))}
             </Col>
-
-            <div className='justify-content-center text-center fs-5 fw-bold'>
-                <ButtonGroup>
-                    <Button variant={`${eventShow === 'shot' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('shot')}>Shot</Button>
-                    <Button variant={`${eventShow === 'pass' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('pass')}>Pass</Button>
-                    <Button variant={`${eventShow === 'interception' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('interception')}>Interception</Button>
-                    <Button variant={`${eventShow === 'clearance' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('clearance')}>Clearance</Button>
-                    <Button variant={`${eventShow === 'duel' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('duel')}>Duel</Button>
-                </ButtonGroup>
-            </div>
-
+            {eventClick && 
+                    <Button onClick={handleEventClickOut}>Reset</Button>
+            }
         </Row>
   )
 }

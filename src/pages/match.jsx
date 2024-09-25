@@ -17,15 +17,19 @@ function Match() {
     const matchesUrl = "https://raw.githubusercontent.com/statsbomb/open-data/master/data/matches/55/282.json";
     const eventsUrl = `https://raw.githubusercontent.com/statsbomb/open-data/master/data/events/${matchId}.json`;
     const lineupsUrl = `https://raw.githubusercontent.com/statsbomb/open-data/master/data/lineups/${matchId}.json`;
+    const threeSixtyUrl = `https://raw.githubusercontent.com/statsbomb/open-data/refs/heads/master/data/three-sixty/${matchId}.json`
 
 
     const { data: matchesData, loading: loadingMatchesData, error: errorMatchesData } = FetchData(matchesUrl);
     const { data: eventsData, loading: loadingEventsData, error: errorEventsData } = FetchData(eventsUrl);
     const { data: lineupsData, loading: loadingLineupsData, error: errorLineupsData } = FetchData(lineupsUrl);
+    const { data: threeSixtyData, loading: loadingThreeSixtyData, error: errorThreeSixtyData } = FetchData(threeSixtyUrl)
 
     // const matchesData = require("../data/282.json");
     // const eventsData = require("../data/events-3942819.json");
-    // const lineupsData = require("../data/lineups-3942819.json")
+    // const lineupsData = require("../data/lineups-3942819.json");
+    // const threeSixtyData = require("../data/three-sixty-3942819.json")
+    
     // const matchData = matchesData.find(match => match.match_id === Number(matchId))
     // const homeTeam = matchData.home_team.home_team_name;
     // const awayTeam = matchData.away_team.away_team_name;
@@ -45,12 +49,12 @@ function Match() {
     }, [matchesData, matchId, matchData])
 
 
-    if (loadingMatchesData || loadingEventsData || loadingLineupsData) {
+    if (loadingMatchesData || loadingEventsData || loadingLineupsData || loadingThreeSixtyData) {
         return <div>Loading...</div>;
     }
 
     if (errorMatchesData || errorEventsData || errorLineupsData) {
-        return <div>Error: {errorMatchesData?.message || errorEventsData?.message || errorLineupsData?.message}</div>;
+        return <div>Error: {errorMatchesData?.message || errorEventsData?.message || errorLineupsData?.message || errorThreeSixtyData?.message}</div>;
     }
     
     
@@ -67,15 +71,15 @@ function Match() {
 
             {content === 'summary' ? (
                 <Row>
+                    <Col className='ms-5'>
+                        <Statistics events_data={eventsData} match_data={matchData} />
+                    </Col>
                     <Col>
                         <Lineups matchData={matchData} lineupsData={lineupsData} />
                     </Col>
-                    <Col>
-                        <Statistics events_data={eventsData} match_data={matchData} />
-                    </Col>
                 </Row>
             ) : content === 'event' ? (
-                <Events matchData={matchData} lineupsData={lineupsData} eventsData={eventsData} />
+                <Events matchData={matchData} lineupsData={lineupsData} eventsData={eventsData} threeSixtyData={threeSixtyData} />
             ) : content === 'playerStats' ? (
                 <PlayerStats events_data={eventsData} match_data={matchData} lineups_data={lineupsData} />
             ) : content === 'analytics' ? (

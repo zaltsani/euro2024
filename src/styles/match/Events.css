@@ -1,0 +1,47 @@
+.checkbox-events .form-check-input:checked {
+    background-color: #75B798;
+    border-color: #75B798;
+}
+
+.player-checkbox {
+    margin-top: 70px;
+    font-size: 18px;
+}
+
+.legend {
+    display: inline-block;
+    margin: 2px 1px;
+    padding: 2px 5px;
+    line-height: 2rem;
+    font-weight: 500;
+    color: #f6fafc;
+    border-radius: 2px;
+}
+
+.color-legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 0;
+    padding-left: 0;
+}
+.color-legend-item {
+    margin: 5px 12px;
+    font-size: 1.4rem;
+}
+.color-legend span {
+    display: inline-block;
+}
+.color-legend-item-color {
+    position: relative;
+    top: 2px;
+    width: 14px;
+    height: 14px;
+    margin-right: 5px;
+    border-radius: 3px;
+    border-color: black;
+    border-width: 10px;
+}
+.color-legend-item::marker{
+    color: white;
+}

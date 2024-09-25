@@ -460,7 +460,12 @@ function Analytics(props) {
         const pitchProps = {
             svgRef: heatmapsRef,
             width: width,
-            margin: width/40,
+            margin: {
+                top: width/40,
+                left: width/40,
+                right: width/40,
+                bottom: width/10
+            },
             pitch_dimension: 'statsbomb',
             background: 'white',
             line_color: 'grey'
@@ -468,10 +473,11 @@ function Analytics(props) {
 
         const dimensions = require('../../data/dimensions.json');
         const dimension = dimensions["statsbomb"];
-        const height = width * dimension.width/dimension.length*dimension.aspect;
-        const innerWidth = width - 2*pitchProps["margin"];
-        const innerHeight = height - 2*pitchProps["margin"];
-        var scX = d3.scaleLinear().domain([0, dimension.length]).range([ 0, innerWidth ])
+        const innerWidth = width - pitchProps.margin.left - pitchProps.margin.right;
+        const innerHeight = innerWidth * dimension.width/dimension.length*dimension.aspect;
+        const height = pitchProps.margin.top + innerHeight + pitchProps.margin.bottom;
+
+        var scX = d3.scaleLinear().domain([0, dimension.length]).range([ 0, width - pitchProps.margin.left - pitchProps.margin.right ])
         var scY = dimension.invert_y
                     ? d3.scaleLinear().domain([0, dimension.width]).range([ 0, innerHeight ])
                     : d3.scaleLinear().domain([dimension.width, 0]).range([ 0, innerHeight ])
@@ -535,7 +541,7 @@ function Analytics(props) {
         const colorScale = d3.scaleSequential(d3.interpolateRgb("white", "red"))
             .domain([0, d3.max(heatmapsData, d => d.count)]);
 
-        const heatmapsSvg = svg.append("g").attr("class", "heatmaps").attr("transform", `translate(${pitchProps.margin}, ${pitchProps.margin})`)
+        const heatmapsSvg = svg.append("g").attr("class", "heatmaps").attr("transform", `translate(${pitchProps.margin.left}, ${pitchProps.margin.top})`)
 
         heatmapsSvg.append("g")
             .selectAll("rect")
@@ -611,7 +617,12 @@ function Analytics(props) {
         const pitchProps = {
             svgRef: playerPassHeatmapsRef,
             width: width,
-            margin: width/40,
+            margin: {
+                top: width/40,
+                left: width/40,
+                right: width/40,
+                bottom: width/10
+            },
             pitch_dimension: 'statsbomb',
             background: 'white',
             line_color: 'grey'
@@ -619,10 +630,11 @@ function Analytics(props) {
 
         const dimensions = require('../../data/dimensions.json');
         const dimension = dimensions["statsbomb"];
-        const height = width * dimension.width/dimension.length*dimension.aspect;
-        const innerWidth = width - 2*pitchProps["margin"];
-        const innerHeight = height - 2*pitchProps["margin"];
-        var scX = d3.scaleLinear().domain([0, dimension.length]).range([ 0, innerWidth ])
+        const innerWidth = width - pitchProps.margin.left - pitchProps.margin.right;
+        const innerHeight = innerWidth * dimension.width/dimension.length*dimension.aspect;
+        const height = pitchProps.margin.top + innerHeight + pitchProps.margin.bottom;
+
+        var scX = d3.scaleLinear().domain([0, dimension.length]).range([ 0, width - pitchProps.margin.left - pitchProps.margin.right ])
         var scY = dimension.invert_y
                     ? d3.scaleLinear().domain([0, dimension.width]).range([ 0, innerHeight ])
                     : d3.scaleLinear().domain([dimension.width, 0]).range([ 0, innerHeight ])
@@ -686,7 +698,7 @@ function Analytics(props) {
         const colorScale = d3.scaleSequential(d3.interpolateRgb("white", "red"))
             .domain([0, d3.max(heatmapsData, d => d.count)]);
 
-        const heatmapsSvg = svg.append("g").attr("class", "heatmaps").attr("transform", `translate(${pitchProps.margin}, ${pitchProps.margin})`)
+        const heatmapsSvg = svg.append("g").attr("class", "heatmaps").attr("transform", `translate(${pitchProps.margin.left}, ${pitchProps.margin.top})`)
 
         heatmapsSvg.append("g")
             .selectAll("rect")
@@ -749,6 +761,142 @@ function Analytics(props) {
     }, [setNumberPlayerPasses, passes, playerNamePassesHeatmaps])
 
 
+    // Possession Chain / Pass Sequence
+    function generateArray(start, stop, length) {
+        const step = (stop - start) / (length - 1);
+        return Array.from({ length }, (_, i) => start + i * step);
+    }
+    const maxPossession = d3.max(events_data, d => d.possession);
+    const PossessionArray = generateArray(1, maxPossession, maxPossession);
+    const allPossession = []
+    PossessionArray.forEach(possessionNumber => {
+        const possessionEvents = events_data.filter(d => d.possession === possessionNumber);
+        allPossession.push({
+            possessionNumber: possessionNumber,
+            possessionCount: possessionEvents.length
+        });
+    })
+    allPossession.sort((a, b) => d3.descending(a.possessionCount, b.possessionCount));
+
+    const possessionChain1Ref = useRef();
+    const possessionChain2Ref = useRef();
+    const possessionChain3Ref = useRef();
+    const possessionChain4Ref = useRef();
+    const possessionChain5Ref = useRef();
+
+    
+    useEffect(() => {
+        const svg1 = d3.select(possessionChain1Ref.current);
+        const svg2 = d3.select(possessionChain2Ref.current);
+        const svg3 = d3.select(possessionChain3Ref.current);
+        const svg4 = d3.select(possessionChain4Ref.current);
+        const svg5 = d3.select(possessionChain5Ref.current);
+        svg1.selectAll("*").remove();
+        svg2.selectAll("*").remove();
+        svg3.selectAll("*").remove();
+        svg4.selectAll("*").remove();
+        svg5.selectAll("*").remove();
+        // Make Pitch
+        const width = 500
+        const pitchProps = {
+            svgRef: possessionChain1Ref,
+            width: width,
+            margin: {
+                top: width/40,
+                left: width/40,
+                right: width/40,
+                bottom: width/10
+            },
+            pitch_dimension: 'statsbomb',
+            background: 'white',
+            line_color: 'grey'
+        };
+        const pitchProps2 = {
+            svgRef: possessionChain2Ref,
+            width: width,
+            margin: {
+                top: width/40,
+                left: width/40,
+                right: width/40,
+                bottom: width/10
+            },
+            pitch_dimension: 'statsbomb',
+            background: 'white',
+            line_color: 'grey'
+        };
+        const pitchProps3 = {
+            svgRef: possessionChain3Ref,
+            width: width,
+            margin: {
+                top: width/40,
+                left: width/40,
+                right: width/40,
+                bottom: width/10
+            },
+            pitch_dimension: 'statsbomb',
+            background: 'white',
+            line_color: 'grey'
+        };
+        const pitchProps4 = {
+            svgRef: possessionChain4Ref,
+            width: width,
+            margin: {
+                top: width/40,
+                left: width/40,
+                right: width/40,
+                bottom: width/10
+            },
+            pitch_dimension: 'statsbomb',
+            background: 'white',
+            line_color: 'grey'
+        };
+        const pitchProps5 = {
+            svgRef: possessionChain5Ref,
+            width: width,
+            margin: {
+                top: width/40,
+                left: width/40,
+                right: width/40,
+                bottom: width/10
+            },
+            pitch_dimension: 'statsbomb',
+            background: 'white',
+            line_color: 'grey'
+        };
+
+        const dimensions = require('../../data/dimensions.json');
+        const dimension = dimensions["statsbomb"];
+        const innerWidth = width - pitchProps.margin.left - pitchProps.margin.right;
+        const innerHeight = innerWidth * dimension.width/dimension.length*dimension.aspect;
+        const height = pitchProps.margin.top + innerHeight + pitchProps.margin.bottom;
+
+        var scX = d3.scaleLinear().domain([0, dimension.length]).range([ 0, width - pitchProps.margin.left - pitchProps.margin.right ])
+        var scY = dimension.invert_y
+                    ? d3.scaleLinear().domain([0, dimension.width]).range([ 0, innerHeight ])
+                    : d3.scaleLinear().domain([dimension.width, 0]).range([ 0, innerHeight ])
+
+        Pitch(pitchProps);
+        Pitch(pitchProps2);
+        Pitch(pitchProps3);
+        Pitch(pitchProps4);
+        Pitch(pitchProps5);
+
+        const possessionChainEvents = events_data.filter(d => d.possession === allPossession[0]["possessionNumber"])
+        const possession = svg1.append("g").attr("class", "possession-chain-events").attr("transform", `translate(${pitchProps.margin.left}, ${pitchProps.margin.top})`)
+        // possessionChainEvents.map(d => console.log(d.type.name))
+        console.log(possessionChainEvents.filter(d => d.type.name === 'Goal Keeper'))
+        possession
+            .selectAll("circle")
+            .data(possessionChainEvents)
+            .join("circle")
+                .attr("cx", d => scX(d.location[0]))
+                .attr("cy", d => scY(d.location[1]))
+                .attr("r", 5)
+                .attr("stroke", "yellow")
+                .attr("stroke-width", 1)
+    })
+
+
     return (
         <div>
             <div className='analytics-container'>
@@ -808,6 +956,21 @@ function Analytics(props) {
                     <div>
                         <p>{playerNamePassesHeatmaps} has {numberPlayerPasses} Passes</p>
                         <svg ref={playerPassHeatmapsRef} fill='none' className='pitch' />
+                    </div>
+                </div>
+            </div>
+
+            <div className='analytics-container'>
+                <div className='header'>
+                    <div className='title'>Possession Chain</div >
+                </div>
+                <div className='possession-chain-container'>
+                    <div>
+                        <svg ref={possessionChain1Ref} fill='none' className='pitch' />
+                        <svg ref={possessionChain2Ref} fill='none' className='pitch' />
+                        <svg ref={possessionChain3Ref} fill='none' className='pitch' />
+                        <svg ref={possessionChain4Ref} fill='none' className='pitch' />
+                        <svg ref={possessionChain5Ref} fill='none' className='pitch' />
                     </div>
                 </div>
             </div>

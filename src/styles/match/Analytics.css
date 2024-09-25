@@ -5,19 +5,22 @@
 }
 
 .header {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 0px;
 }
 
 .title {
+    grid-column: span 6;
     font-size: 30px;
     font-weight: bold;
 }
 
 .button-teams {
+    grid-column: span 6;
     display: flex;
     align-items: center;
-    /* justify-content: end; */
-    margin-left: 120px;
+    justify-content: start;
 }
 
 .pitch {

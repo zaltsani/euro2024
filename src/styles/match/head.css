@@ -19,6 +19,12 @@ hr {
     background: white;
     margin: none;
     text-align: center;
+    /* transition: 0.3s; */
+}
+
+.button:hover {
+    border-bottom: 2px solid black;
+    /* background-color: #; */
 }
 
 .button-nav {

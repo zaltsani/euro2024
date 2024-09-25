@@ -106,19 +106,16 @@ function Lineups(props) {
     return (
         <Row>
             <Col className='d-flex flex-column justify-content-center'>
-                <p className='text-center fw-bold fs-2'>Lineups</p>
-                <div className='m-3 d-flex justify-content-center'>
-                    <ButtonGroup>
-                        <Button variant={`${homeAway === 'home' ? 'danger' : 'outline-danger'}`} onClick={() => setHomeAway('home')}>
-                            {matchData.home_team.home_team_name}
-                        </Button>
-                        <Button variant={`${homeAway === 'away' ? 'danger' : 'outline-danger'}`} onClick={() => setHomeAway('away')}>
-                            {matchData.away_team.away_team_name}
-                        </Button>
-                    </ButtonGroup>
-                </div>
-                <div className='d-flex justify-content-center m-3'>
-                    {/* {events_data.data[homeAway === 'home' ? 0 : 1]['tactics']['formation']} */}
+                <div className='d-flex justify-content-center mb-4'>
+                    <span className='text-center fw-bold fs-2'>Lineups</span>
+                        <ButtonGroup className='align-items-center ms-5'>
+                            <Button variant={`${homeAway === 'home' ? 'danger' : 'outline-danger'}`} onClick={() => setHomeAway('home')}>
+                                {matchData.home_team.home_team_name}
+                            </Button>
+                            <Button variant={`${homeAway === 'away' ? 'danger' : 'outline-danger'}`} onClick={() => setHomeAway('away')}>
+                                {matchData.away_team.away_team_name}
+                            </Button>
+                        </ButtonGroup>
                 </div>
                 <div className='d-flex justify-content-center'>
                     <svg ref={lineupsViz} />

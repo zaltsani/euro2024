@@ -140,71 +140,50 @@ function Statistics(props) {
 
     return (
         <div className='statistics'>
-        {/* <Table id='statistics'>
-            <thead>
-                <tr>
-                    <th>{homeTeam}</th>
-                    <th>Statistics</th>
-                    <th>{awayTeam}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {statistics.map((stats) => (
-                    <tr>
-                        <td>{stats.homeTeam}</td>
-                        <td>{stats.title}</td>
-                        <td>{stats.awayTeam}</td>
-                    </tr>
-                ))}
-            </tbody>
-        </Table> */}
-
         <p className='text-center fw-bold fs-2'>Statistics</p>
-        <svg viewBox={`0 0 ${width} ${height}`}>
-            <image
-                href={`https://flagcdn.com/${homeCountryCode}.svg`}
-                width={50}
-                transform={`translate(${margin.left}, ${margin.top + 60/2 + 10})`}
-                className='country-flag'
-            />
-            <image
-                href={`https://flagcdn.com/${awayCountryCode}.svg`}
-                width={50}
-                transform={`translate(${innerWidth-50}, ${margin.top + 60/2 + 10})`}
-                className='country-flag'
-            />
-            <g
-                transform={`translate(${margin.left}, ${margin.top})`}
-                ref={statsRef}
-            >
-            </g>
-            
-            {statistics.map((stats, index) => (
-                <g transform={`translate(${margin.left}, ${margin.top + 140 + 27*index})`}>
-                    <rect
-                        x={0}
-                        y={0}
-                        width={stats.homeTeam / (stats.homeTeam + stats.awayTeam) * innerWidth - .1}
-                        height={12}
-                        fill='#0300CC'
-                        rx={3}
-                    />
-                    <rect
-                        x={stats.homeTeam / (stats.homeTeam + stats.awayTeam) * innerWidth + .1}
-                        y={0}
-                        width={innerWidth - stats.homeTeam / (stats.homeTeam + stats.awayTeam) * innerWidth}
-                        height={12}
-                        fill='#D10000'
-                        rx={3}
-                    />
-                    <text x={5} y={-6} className='stats-detail'>{stats.homeTeam}</text>
-                    <text x={innerWidth/2} y={-6} className='stats-detail'>{stats.title}</text>
-                    <text x={innerWidth-5} y={-6} className='stats-detail'>{stats.awayTeam}</text>
-                </g> 
-            ))}
-        </svg>
-
-        
+            <svg viewBox={`0 0 ${width} ${height}`}>
+                <image
+                    href={`https://flagcdn.com/${homeCountryCode}.svg`}
+                    width={50}
+                    transform={`translate(${margin.left}, ${margin.top + 60/2 + 10})`}
+                    className='country-flag'
+                />
+                <image
+                    href={`https://flagcdn.com/${awayCountryCode}.svg`}
+                    width={50}
+                    transform={`translate(${innerWidth-50}, ${margin.top + 60/2 + 10})`}
+                    className='country-flag'
+                />
+                <g
+                    transform={`translate(${margin.left}, ${margin.top})`}
+                    ref={statsRef}
+                >
+                </g>
+                
+                {statistics.map((stats, index) => (
+                    <g transform={`translate(${margin.left}, ${margin.top + 140 + 27*index})`}>
+                        <rect
+                            x={0}
+                            y={0}
+                            width={stats.homeTeam / (stats.homeTeam + stats.awayTeam) * innerWidth - .1}
+                            height={12}
+                            fill='#0300CC'
+                            rx={3}
+                        />
+                        <rect
+                            x={stats.homeTeam / (stats.homeTeam + stats.awayTeam) * innerWidth + .1}
+                            y={0}
+                            width={innerWidth - stats.homeTeam / (stats.homeTeam + stats.awayTeam) * innerWidth}
+                            height={12}
+                            fill='#D10000'
+                            rx={3}
+                        />
+                        <text x={5} y={-6} className='stats-detail'>{stats.homeTeam}</text>
+                        <text x={innerWidth/2} y={-6} className='stats-detail'>{stats.title}</text>
+                        <text x={innerWidth-5} y={-6} className='stats-detail'>{stats.awayTeam}</text>
+                    </g> 
+                ))}
+            </svg>        
         </div>
     )
 }

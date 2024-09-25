@@ -2,14 +2,14 @@ import * as d3 from 'd3';
 import { useEffect } from 'react';
 
 function Pitch(props) {
-   const { svgRef, width, pitch_dimension, background, line_color } = props;
+   const { svgRef, width, margin, pitch_dimension, background, line_color } = props;
    const dimensions = require('../../data/dimensions.json')
    const dimension = dimensions[pitch_dimension]
 
-   const height = width * dimension.width/dimension.length*dimension.aspect
-   const margin = width/40;
-   const innerWidth = width - margin - margin;
-   const innerHeight = height - margin - margin;
+   // const height = width * dimension.width/dimension.length*dimension.aspect;
+   const innerWidth = width - margin.left - margin.right;
+   const innerHeight = innerWidth * dimension.width/dimension.length*dimension.aspect;
+   const height = margin.top + innerHeight + margin.bottom;
 
    const lineColor = line_color ? line_color : "grey";
    const lineWidth = 2;
@@ -25,7 +25,7 @@ function Pitch(props) {
 
    const pitch = svg
       .append('g')
-         .attr("transform", `translate(${margin}, ${margin})`)
+         .attr("transform", `translate(${margin.left}, ${margin.top})`)
          .attr("class", 'pitch');
 
    // background
