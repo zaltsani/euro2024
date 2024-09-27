@@ -10,7 +10,7 @@ function Statistics(props) {
     const shots = events_data?.filter(event => event.type.name === 'Shot');
     const homeShots = shots?.filter(shot => shot.team.name === homeTeam)
     const awayShots = shots?.filter(shot => shot.team.name === awayTeam)
-    const shotsOnTarget = shots?.filter(shot => shot.shot.outcome.name === 'Saved' || shot.shot.outcome.name === 'Goal');
+    const shotsOnTarget = shots?.filter(shot => shot.shot.outcome.name === 'Goal' || shot.shot.outcome.name === 'Saved' || shot.shot.outcome.name === 'Saved To Post'   );
     const passes = events_data?.filter(event => event.type.name === 'Pass');
     const homePasses = passes?.filter(pass => pass.team.name === homeTeam);
     const awayPasses = passes?.filter(pass => pass.team.name === awayTeam);

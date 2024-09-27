@@ -3,6 +3,8 @@ import Pitch from './Pitch';
 import * as d3 from 'd3';
 import { Button, ButtonGroup, Col, Form, Row } from 'react-bootstrap';
 import '../../styles/match/Events.css';
+import { Slider, Stack,  } from '@mui/material';
+
 
 function Events(props) {
     const { matchData, lineupsData, eventsData, threeSixtyData } = props;
@@ -19,6 +21,16 @@ function Events(props) {
     const [eventShow, setEventShow] = useState('shot');
     const [eventClick, setEventClick] = useState(false);
     const listPlayersPlay = homeAway === 'home' ? homePlayersPlay : awayPlayersPlay;
+    const maxMinute = d3.max(eventsData, d => d.minute);
+    const [value, setValue] = useState([0, maxMinute]);
+
+    const handleValueChange = (event, newValue) => {
+        setValue(newValue);
+    };
+
+    function valueText(value) {
+        return `${value}°C`;
+    }
 
     const handleEventClickOut = () => {
         setEventClick(false);
@@ -158,10 +170,9 @@ function Events(props) {
         const duel = eventsData.filter(event => event.type.name === 'Duel');
         const dribble = eventsData.filter(event => event.type.name === 'Dribble');
         const defensiveAction = eventsData.filter(event => (event.type.name === 'Interception') || (event.type.name === 'Clearance') || (event.type.name === 'Duel') || (event.type.name === 'Ball Recovery') || (event.type.name === 'Block') || (event.type.name === 'Foul Committed') || (event.type.name === '50/50'));
-        console.log(dribble)
 
         const data = eventShow === 'shot' ? shot : eventShow === 'pass' ? pass : eventShow === 'interception' ? interceptions : eventShow === 'clearance' ? clearances : eventShow === 'duel' ? duel : eventShow === 'dribble' ? dribble : shot;
-        const filteredData = data.filter(event => player_ids.includes(event.player.id) && event.team.name === (homeAway === 'home' ? homeTeamName : awayTeamName));
+        const filteredData = data.filter(event => player_ids.includes(event.player.id) && event.team.name === (homeAway === 'home' ? homeTeamName : awayTeamName) && event.minute >= value[0] && event.minute <= value[1]);
         
         const events = d3.select(chalkboardRef.current)
             .append("g")
@@ -187,7 +198,7 @@ function Events(props) {
                 .on("mouseover", function(mouseEvent, d) {
                     
                     // event.select("circle").attr("r", 10)
-                    tooltipContent.attr("transform", `translate(${d.team.name === homeTeamName ? -20-300 + 20 : 40}, 0)`)
+                    tooltipContent.attr("transform", `translate(${-20-300 + 20}, 0)`)
                     tooltipContent.append("text").text(d.type.name).attr("y", -50).style("font-weight", "bold").style("font-size", "20px")
                         .append("tspan").text(`  (${d.shot.outcome.name})`).style("font-weight", "normal").style("font-size", "18px")
                     tooltipContent.append("text").text(`Team: ${d.team.name}`).attr("y", -20);
@@ -201,12 +212,12 @@ function Events(props) {
                     // tooltipContent.append("text").text(`: `).attr("y", 60)
 
                     tooltipBackground
-                        .attr("x", d.team.name === homeTeamName ? -20-300 : 20)
+                        .attr("x", -20-300)
                         .attr("y", -75)
                         .attr("width", 300)
                         .attr("height", 220)
                     tooltipWrapper
-                        .attr("transform", `translate(${pitchProps.margin.left + scX(d['team']['name'] === homeTeamName ? d['location'][0] : dimension.length - d['location'][0])}, ${pitchProps.margin.top + scY(d['team']['name'] === homeTeamName ? d['location'][1] : dimension.width - d['location'][1])})`)
+                        .attr("transform", `translate(${pitchProps.margin.left + scX(d['location'][0])}, ${pitchProps.margin.top + scY(d['location'][1])})`)
                     tooltipWrapper
                         .transition().duration(400)
                         .style("opacity", 1)
@@ -645,7 +656,7 @@ function Events(props) {
             .attr("class", "tooltip-content")
             // .attr("transform", "translate(40, 0)")
 
-    }, [eventsData, homeTeamName, awayTeamName, chalkboardRef, homePlayersPlay, awayPlayersPlay, eventShow, threeSixtyData, homeAway])
+    }, [eventsData, homeTeamName, awayTeamName, chalkboardRef, homePlayersPlay, awayPlayersPlay, eventShow, threeSixtyData, homeAway, value])
 
     // const shotFormatsInfo = [
     //     {label: "Goal", color: "red"},
@@ -685,7 +696,7 @@ function Events(props) {
             </div>
 
             <Col sm={8}>
-                <div className='justify-content-center text-center'>
+                <div className='justify-content-center text-center mb-3'>
                     <ButtonGroup>
                         <Button variant={`${eventShow === 'shot' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('shot')}>Shot</Button>
                         <Button variant={`${eventShow === 'pass' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('pass')}>Pass</Button>
@@ -695,20 +706,25 @@ function Events(props) {
                         <Button variant={`${eventShow === 'duel' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('duel')}>Duel</Button>
                     </ButtonGroup>
                 </div>
-                {/* <div className='legend-container'>
-                    <ul className='color-legend'>
-                        <li className='color-legend-item'>
-                            <span className='color-legend-item-color' style={{"background-color":"red"}}></span>
-                            <span className='color-legend-item-label'>Goal</span>
-                        </li>
-                        <li className='color-legend-item'>
-                            <span className='color-legend-item-color' style={{"background-color":"red"}}></span>
-                            <span className='color-legend-item-label'>Shot On Target</span>
-                        </li>
-                    </ul>
-                </div> */}
                 <div className='d-flex justify-content-center'>
                     <svg ref={chalkboardRef} fill='none' />
+                </div>
+                <div className='ms-5 me-5'>
+                    <Slider
+                        aria-label='Always visible'
+                        getAriaValueText={valueText}
+                        value={value}
+                        valueLabelDisplay='auto'
+                        onChange={handleValueChange}
+                        min={0}
+                        max={maxMinute}
+                        marks={[
+                            {value: 0, label: "0'"},
+                            {value: 45, label: "45'"},
+                            {value: 90, label: "90'"},
+                            {value: maxMinute, label: `${maxMinute}'`}
+                        ]}
+                    />
                 </div>
             </Col>
 

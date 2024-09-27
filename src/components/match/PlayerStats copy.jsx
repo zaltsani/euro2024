@@ -39,32 +39,12 @@ function PlayerStats(props) {
         { label: "Total Shot", accessor: "shot", sortable: true },
         { label: "Shot On Target", accessor: "shot_on_target", sortable: true },
         { label: "Dribbles", accessor: "dribble", sortable: true },
-    ]
-    const passesStatsColumns = [
-        { label: "Player Name", accessor: "player_name", sortable: false },
-        { label: "Passes", accessor: "passes_details", sortable: true },
-        { label: "Assist", accessor: "assist", sortable: true },
-        { label: "Chance Created", accessor: "chances_created", sortable: true },
-        { label: "Passes into Final Third", accessor: "passes_into_final_third", sortable: true },
-        { label: "Passes into The Box", accessor: "passes_into_the_box", sortable: true },
-        { label: "Crosses", accessor: "crosses", sortable: true },
-        { label: "Cut Back", accessor: "cut_back", sortable: true },
-        { label: "Switch Pass", accessor: "switch_pass", sortable: true },
-    ]
-    const defenseStatsColumns = [
-        { label: "Player Name", accessor: "player_name", sortable: false },
-        { label: "Tackle", accessor: "tackle", sortable: true },
-        { label: "Interception", accessor: "interception", sortable: true },
-        { label: "Duel", accessor: "duel", sortable: true },
-        { label: "Ball Recovery", accessor: "ball_recovery", sortable: true },
-        { label: "Blocks", accessor: "blocks", sortable: true },
-        { label: "Clearance", accessor: "clearances", sortable: true },
+        { label: "Successful Dribble", accessor: "successful_dribble", sortable: true },
     ]
     const columns = statsType === 'general' ? generalStatsColumns
         : statsType === 'attack' ? attackStatsColumns
-        : statsType === 'passes' ? passesStatsColumns
-        : statsType === 'defense' ? defenseStatsColumns
         : generalStatsColumns;
+    console.log(columns)
 
     const calculatePlayerStats = (players, events_data) => {
         return players.map(player => {
@@ -72,7 +52,7 @@ function PlayerStats(props) {
             const shots = events_data.filter(event => event.type.name === 'Shot' && event.player.id === playerId)
             const goal = shots.filter(event => event.shot.outcome.name === 'Goal' && event.period !== 5)
             const xG = shots.map(shot => shot.shot.statsbomb_xg)
-            const shotsOnTarget = shots.filter(shot => shot.shot.outcome.name === 'Goal' || shot.shot.outcome.name === 'Saved' || shot.shot.outcome.name === 'Blocked' || shot.shot.outcome.name === 'Saved To Post');
+            const shotsOnTarget = shots.filter(shot => shot.shot.outcome.name === 'Goal' && shot.shot.outcome.name === 'Saved' && shot.shot.outcome.name === 'Blocked' && shot.shot.outcome.name === 'Saved To Post');
             const passes = events_data.filter(event => event.type.name === 'Pass' && event.player.id === playerId);
             const unsuccessful_passes = passes.filter(pass => pass.pass.outcome)
             const assist = passes.filter(pass => pass.pass["goal_assist"]);
@@ -81,7 +61,6 @@ function PlayerStats(props) {
             const passesIntoTheBox = passes.filter(pass => pass.pass.end_location[0] > 102 && pass.pass.end_location[1] > 18 && pass.pass.end_location[1] < 62);
             const unsuccessfulPassesIntoBox = passesIntoTheBox.filter(pass => pass.pass.outcome)
             const crosses = passes.filter(pass => pass.pass.cross);
-            const unsuccessful_crosses = crosses.filter(d => d.pass.outcome);
             const cutBack = passes.filter(pass => pass.pass.cut_back);
             const switchPass = passes.filter(pass => pass.pass.switch);
             const dribble = events_data.filter(event => event.type.name === 'Dribble' && event.player.id === playerId);
@@ -106,20 +85,19 @@ function PlayerStats(props) {
                     "assist": assist.length,
                     "chances_created": chacesCreated.length,
                     "successful_passes": passes.length - unsuccessful_passes.length,
-                    "passes_details": `${passes.length - unsuccessful_passes.length}/${passes.length}(${Math.round((passes.length-unsuccessful_passes.length)/(passes.length)*100)}%)`,
                     "passes_into_final_third": passesIntoFinalThird.length,
                     "passes_into_the_box": passesIntoTheBox.length,
                     "successful_passes_into_the_box": passesIntoTheBox.length - unsuccessfulPassesIntoBox.length,
-                    "crosses": `${crosses.length-unsuccessful_crosses.length}/${crosses.length}`,
+                    "crosses": crosses.length,
                     "cut_back": cutBack.length,
                     "switch_pass": switchPass.length,
-                    "dribble": `${successfulDribble.length}/${dribble.length}`,
+                    "dribble": dribble.length,
                     "successful_dribble": successfulDribble.length,
                     "duel": duel.length,
-                    "tackle": `${successfulTackle.length}/${tackle.length}`,
+                    "tackle": tackle.length,
                     "tackle_won": successfulTackle.length,
                     "interception": interceptions.length,
-                    "ball_recovery": `${ballRecoveries.length - failureRecoveries.length}/${ballRecoveries.length}`,
+                    "ball_recovery": ballRecoveries.length,
                     "successful_recovery": ballRecoveries.length - failureRecoveries.length,
                     "blocks": blocks.length,
                     "clearances": clearances.length,
@@ -129,6 +107,7 @@ function PlayerStats(props) {
     }
 
     const [listPlayersStats, setListPlayersStats] = useState(calculatePlayerStats(playersPlay, events_data));
+
     const [sortField, setSortField] = useState("");
     const [order, setOrder] = useState("asc");
 
@@ -157,7 +136,9 @@ function PlayerStats(props) {
 
     return (
         <div id='player-stats-container'>
-            <div className='mb-4 mt-3 d-flex'>
+            <div className='m-3 mt-3 d-flex justify-content-center'>
+            </div>
+            <div>
                 <ButtonGroup>
                     <Button variant={`${statsType === 'general' ? 'danger' : 'outline-danger'}`} onClick={() => setStatsType('general')}>General</Button>
                     <Button variant={`${statsType === 'attack' ? 'danger' : 'outline-danger'}`} onClick={() => setStatsType('attack')}>Attack</Button>
@@ -168,50 +149,138 @@ function PlayerStats(props) {
             </div>
             
             <div>
-                <Table>
-                    <thead>
-                        <tr>
-                            {columns.map(({ label, accessor, sortable }) => {
-                                const cl = sortable
-                                    ? sortField === accessor && order === "asc"
-                                        ? "up"
-                                    : sortField === accessor && order === "desc"
-                                        ? "down"
-                                    : "default"
-                                : "";
-                                return (
-                                    <th
-                                        key={accessor}
-                                        onClick={sortable ? () => handleSortingChange(accessor) : null}
-                                        className={`${cl} ${accessor === "player_name" ? "" : "text-align-center"} align-middle`}
-                                    >
-                                        {label}
-                                    </th>
-                                );
-                            })}
-                        </tr>
-                    </thead>
-                    <tbody>
-                            {listPlayersStats?.map((player) => {
-                                return (
-                                    <tr key={player.player_id}>
-                                        {columns.map(({ accessor }) => {
-                                            const tData = accessor === "player_name" ? player.player_name
-                                                : player.stats[accessor] ? player.stats[accessor] : 0;
-                                            return (
-                                                <td
-                                                    key={accessor}
-                                                    className={accessor === "player_name" ? "" : "text-align-center"}
-                                                >
-                                                    {tData}
-                                                </td>
-                                            )
-                                    })}
-                                </tr>
-                                );
-                            })}
-                    </tbody>
-                </Table>
+                {statsType === 'general' ? (
+                    <Table>
+                        <thead>
+                            <tr>
+                                {generalStatsColumns.map(({ label, accessor, sortable }) => {
+                                    const cl = sortable
+                                        ? sortField === accessor && order === "asc"
+                                            ? "up"
+                                        : sortField === accessor && order === "desc"
+                                            ? "down"
+                                        : "default"
+                                    : "";
+                                    return (
+                                        <th
+                                            key={accessor}
+                                            onClick={sortable ? () => handleSortingChange(accessor) : null}
+                                            className={cl}
+                                        >
+                                            {label}
+                                        </th>
+                                    );
+                                })}
+                            </tr>
+                        </thead>
+                        <tbody>
+                                {listPlayersStats?.map((player) => {
+                                    return (
+                                        <tr key={player.player_id}>
+                                            {generalStatsColumns.map(({ accessor }) => {
+                                                const tData = accessor === "player_name" ? player.player_name : player.stats[accessor] ? player.stats[accessor] : 0;
+                                                return (
+                                                    <td key={accessor}>
+                                                        {tData}
+                                                    </td>
+                                                )
+                                        })}
+                                    </tr>
+                                    );
+                                })}
+                        </tbody>
+                    </Table>
+                ) : statsType === 'attack' ? (
+                    <Table>
+                        <thead>
+                            <tr>
+                                <th>Player Name</th>
+                                <th>Goal</th>
+                                <th>xG</th>
+                                <th>Total Shot</th>
+                                <th>Shot On Target</th>
+                                <th>Successful Dribbles</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                                {listPlayersStats?.map(player => (
+                                    <tr>
+                                        <td>{player.player_name}</td>
+                                        <td>{player.stats.goal}</td>
+                                        <td>{player.stats.xg}</td>
+                                        <td>{player.stats.shot}</td>
+                                        <td>{player.stats.shot_on_target}</td>
+                                        <td>{player.stats.successful_dribble}/{player.stats.dribble} ({player.stats.successful_dribble ? Math.round(player.stats.successful_dribble*100/player.stats.dribble) : 0}%)</td>
+                                    </tr>
+                                ))}
+                        </tbody>
+                    </Table>
+                ) : statsType === 'passes' ? (
+                    <Table>
+                        <thead>
+                            <tr>
+                                <th>Player Name</th>
+                                <th>Touches</th>
+                                <th>Passes</th>
+                                <th>Assist</th>
+                                <th>Chances Created</th>
+                                <th>Passes into Final Third</th>
+                                <th>Passes into the Box</th>
+                                <th>Crosses</th>
+                                <th>Cut Back</th>
+                                <th>Long Balls</th>
+                                <th>Switch Pass</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                                {listPlayersStats?.map(player => (
+                                    <tr>
+                                        <td>{player.player_name}</td>
+                                        <td>Working on It</td>
+                                        <td>{player.stats.successful_passes}/{player.stats.passes}({Math.round(player.stats.successful_passes/player.stats.passes*100)}%)</td>
+                                        <td>{player.stats.assist}</td>
+                                        <td>{player.stats.chances_created}</td>
+                                        <td>{player.stats.passes_into_final_third}</td>
+                                        <td>{player.stats.successful_passes_into_the_box}/{player.stats.passes_into_the_box}</td>
+                                        <td>{player.stats.crosses}</td>
+                                        <td>{player.stats.cut_back}</td>
+                                        <td>Wait</td>
+                                        <td>{player.stats.switch_pass}</td>
+                                    </tr>
+                                ))}
+                        </tbody>
+                    </Table>
+                ) : statsType === 'defense' ? (
+                    <Table>
+                        <thead>
+                            <tr>
+                                <th>Player Name</th>
+                                <th>Tackle</th>
+                                <th>Interception</th>
+                                <th>Ball Recovery</th>
+                                <th>Blocks</th>
+                                <th>Clearances</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                                {listPlayersStats?.map(player => (
+                                    <tr>
+                                        <td>{player.player_name}</td>
+                                        <td>{ player.stats.tackle ? `${player.stats.tackle_won}/${player.stats.tackle} (${Math.round(player.stats.tackle_won*100/player.stats.tackle)}%)` : player.stats.tackle}</td>
+                                        <td>{player.stats.interception}</td>
+                                        <td>{player.stats.ball_recovery ? `${player.stats.successful_recovery}/${player.stats.ball_recovery} (${Math.round(player.stats.successful_recovery*100/player.stats.ball_recovery)}%)` : player.stats.ball_recovery }</td>
+                                        <td>{player.stats.blocks}</td>
+                                        <td>{player.stats.clearances}</td>
+                                    </tr>
+                                ))}
+                        </tbody>
+                    </Table>
+                ) : statsType === 'goalkeeping' ? (
+                    <tr>
+                        <td>Attack</td>
+                    </tr>
+                ) : (<p>Fail</p>)
+                }
             </div>
         </div>
     )

@@ -2,3 +2,24 @@
     margin-left: 10%;
     margin-right: 10%;
 }
+
+th.up {
+    background-image: url("../../assets/arrow/up_arrow.png");
+}
+th.down {
+    background-image: url("../../assets/arrow/down_arrow.png");
+}
+th.default {
+    background-image: url("../../assets/arrow/default.png");
+}
+
+th.up, th.default, th.down {
+    cursor: pointer;
+    background-repeat: no-repeat;
+    background-position: center right;
+}
+
+
+/* tr {
+    text-align: center;
+} */
