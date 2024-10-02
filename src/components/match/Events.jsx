@@ -242,6 +242,7 @@ function Events(props) {
                         event.attr("opacity", 1);
                         d3.select(this).selectAll("*").attr("opacity", 1);
                         const eventThreeSixty = threeSixtyData.find(threeSixty => threeSixty.event_uuid === d.id);
+                        // console.log(eventThreeSixty)
                         const threeSixty = svg.append("g").attr("class", "three-sixty")
                         threeSixty
                             .selectAll("circle")
@@ -445,6 +446,7 @@ function Events(props) {
                         d3.select(chalkboardRef.current).select(".tooltip-wrapper").selectAll("*").attr("opacity", 0)
                         const eventThreeSixty = threeSixtyData.find(threeSixty => threeSixty.event_uuid === d.id);
                         const threeSixty = svg.append("g").attr("class", "three-sixty")
+                        console.log(d)
                         threeSixty
                             .selectAll("circle")
                             .data(eventThreeSixty.freeze_frame)
@@ -724,6 +726,7 @@ function Events(props) {
                             {value: 90, label: "90'"},
                             {value: maxMinute, label: `${maxMinute}'`}
                         ]}
+                        color='danger'
                     />
                 </div>
             </Col>

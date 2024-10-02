@@ -45,3 +45,11 @@
     margin-left: 100px;
     align-content: center;
 }
+
+.pitch-container{
+    max-width: 600px;
+}
+
+.heatmaps-pitch-container{
+    max-width: 800px;
+}

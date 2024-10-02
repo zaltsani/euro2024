@@ -1,5 +1,4 @@
 import * as d3 from 'd3';
-import { useEffect } from 'react';
 
 function Pitch(props) {
    const { svgRef, width, margin, pitch_dimension, background, line_color } = props;
@@ -15,9 +14,9 @@ function Pitch(props) {
    const lineWidth = 2;
 
    const svg = d3.select(svgRef.current)
-      // .attr("viewBox", `0 0 ${width} ${height}`)
-      .attr("width", width)
-      .attr("height", height)
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      // .attr("width", width)
+      // .attr("height", height)
 
    // Scaling
    var scX = d3.scaleLinear().domain([ 0, dimension.length ]).range([ 0, innerWidth ])

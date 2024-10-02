@@ -4,6 +4,9 @@ import Pitch from './Pitch';
 import VerticalPitch from './VerticalPitch2';
 import '../../styles/match/Analytics.css';
 import { Button, ButtonGroup } from 'react-bootstrap';
+import PossessionChain from './Analytics/PossessionChain';
+import Heatmaps from './Analytics/Heatmaps';
+import ClusterPass from './Analytics/ClusterPass';
 
 function Analytics(props) {
     const { events_data, match_data, lineups_data } = props;
@@ -786,75 +789,13 @@ function Analytics(props) {
 
     
     useEffect(() => {
-        const svg1 = d3.select(possessionChain1Ref.current);
-        const svg2 = d3.select(possessionChain2Ref.current);
-        const svg3 = d3.select(possessionChain3Ref.current);
-        const svg4 = d3.select(possessionChain4Ref.current);
-        const svg5 = d3.select(possessionChain5Ref.current);
-        svg1.selectAll("*").remove();
-        svg2.selectAll("*").remove();
-        svg3.selectAll("*").remove();
-        svg4.selectAll("*").remove();
-        svg5.selectAll("*").remove();
         // Make Pitch
         const width = 500
         const pitchProps = {
             svgRef: possessionChain1Ref,
             width: width,
             margin: {
-                top: width/40,
-                left: width/40,
-                right: width/40,
-                bottom: width/10
-            },
-            pitch_dimension: 'statsbomb',
-            background: 'white',
-            line_color: 'grey'
-        };
-        const pitchProps2 = {
-            svgRef: possessionChain2Ref,
-            width: width,
-            margin: {
-                top: width/40,
-                left: width/40,
-                right: width/40,
-                bottom: width/10
-            },
-            pitch_dimension: 'statsbomb',
-            background: 'white',
-            line_color: 'grey'
-        };
-        const pitchProps3 = {
-            svgRef: possessionChain3Ref,
-            width: width,
-            margin: {
-                top: width/40,
-                left: width/40,
-                right: width/40,
-                bottom: width/10
-            },
-            pitch_dimension: 'statsbomb',
-            background: 'white',
-            line_color: 'grey'
-        };
-        const pitchProps4 = {
-            svgRef: possessionChain4Ref,
-            width: width,
-            margin: {
-                top: width/40,
-                left: width/40,
-                right: width/40,
-                bottom: width/10
-            },
-            pitch_dimension: 'statsbomb',
-            background: 'white',
-            line_color: 'grey'
-        };
-        const pitchProps5 = {
-            svgRef: possessionChain5Ref,
-            width: width,
-            margin: {
-                top: width/40,
+                top: width/10,
                 left: width/40,
                 right: width/40,
                 bottom: width/10
@@ -864,41 +805,102 @@ function Analytics(props) {
             line_color: 'grey'
         };
 
-        const dimensions = require('../../data/dimensions.json');
-        const dimension = dimensions["statsbomb"];
-        const innerWidth = width - pitchProps.margin.left - pitchProps.margin.right;
-        const innerHeight = innerWidth * dimension.width/dimension.length*dimension.aspect;
-        const height = pitchProps.margin.top + innerHeight + pitchProps.margin.bottom;
+        PossessionChain(pitchProps, possessionChain1Ref, events_data.filter(d => d.possession === allPossession[0]["possessionNumber"]));
+        PossessionChain(pitchProps, possessionChain2Ref, events_data.filter(d => d.possession === allPossession[1]["possessionNumber"]));
+        PossessionChain(pitchProps, possessionChain3Ref, events_data.filter(d => d.possession === allPossession[2]["possessionNumber"]));
+        PossessionChain(pitchProps, possessionChain4Ref, events_data.filter(d => d.possession === allPossession[3]["possessionNumber"]));
+        PossessionChain(pitchProps, possessionChain5Ref, events_data.filter(d => d.possession === allPossession[4]["possessionNumber"]));
+    })
 
-        var scX = d3.scaleLinear().domain([0, dimension.length]).range([ 0, width - pitchProps.margin.left - pitchProps.margin.right ])
-        var scY = dimension.invert_y
-                    ? d3.scaleLinear().domain([0, dimension.width]).range([ 0, innerHeight ])
-                    : d3.scaleLinear().domain([dimension.width, 0]).range([ 0, innerHeight ])
+    // Heatmaps of Action
+    const heatmapsOfActionsRef = useRef();
+    const [heatmapsofActionHomeAway, setHeatmapsofActionHomeAway] = useState('home');
+    useEffect(() => {
+        const width = 500
+        const pitchProps = {
+            svgRef: heatmapsOfActionsRef,
+            width: width,
+            margin: {
+                top: width/40,
+                left: width/40,
+                right: width/8,
+                bottom: width/10
+            },
+            pitch_dimension: 'statsbomb',
+            background: 'white',
+            line_color: 'grey'
+        };
+        const data = events_data.filter(d =>
+            d.type.name === "Pass"
+            || d.type.name === "Shot"
+            || d.type.name === "Carry"
+            || d.type.name === "Dribble"
+        )
+        const filteredData = data.filter(d => d.team.name === (heatmapsofActionHomeAway === 'home' ? homeTeam : awayTeam))
+        Heatmaps(filteredData, pitchProps)
+    })
 
-        Pitch(pitchProps);
-        Pitch(pitchProps2);
-        Pitch(pitchProps3);
-        Pitch(pitchProps4);
-        Pitch(pitchProps5);
-
-        const possessionChainEvents = events_data.filter(d => d.possession === allPossession[0]["possessionNumber"])
-        const possession = svg1.append("g").attr("class", "possession-chain-events").attr("transform", `translate(${pitchProps.margin.left}, ${pitchProps.margin.top})`)
-        // possessionChainEvents.map(d => console.log(d.type.name))
-        console.log(possessionChainEvents.filter(d => d.type.name === 'Goal Keeper'))
-        possession
-            .selectAll("circle")
-            .data(possessionChainEvents)
-            .join("circle")
-                .attr("cx", d => scX(d.location[0]))
-                .attr("cy", d => scY(d.location[1]))
-                .attr("r", 5)
-                .attr("stroke", "yellow")
-                .attr("stroke-width", 1)
+    // Pass Cluster
+    const passClusterRef = useRef();
+    // const [heatmapsofActionHomeAway, setHeatmapsofActionHomeAway] = useState('home');
+    useEffect(() => {
+        const width = 500
+        const pitchProps = {
+            svgRef: passClusterRef,
+            width: width,
+            margin: {
+                top: width/40,
+                left: width/40,
+                right: width/8,
+                bottom: width/10
+            },
+            pitch_dimension: 'statsbomb',
+            background: 'white',
+            line_color: 'grey'
+        };
+        const data = events_data.filter(d => d.type.name === "Pass")
+        const filteredData = data.filter(d => d.team.name === (heatmapsofActionHomeAway === 'home' ? homeTeam : awayTeam))
+        ClusterPass(filteredData, pitchProps)
     })
 
 
     return (
         <div>
+
+            <div className='analytics-container'>
+                <div className='header'>
+                    <div className='title'>Pass Cluster</div >
+                    <div className='button-teams'>
+                        <ButtonGroup>
+                            <Button variant={`${heatmapsofActionHomeAway   === 'home' ? 'danger' : 'outline-danger'}`} onClick={() => setHeatmapsofActionHomeAway("home")}>{homeTeam}</Button>
+                            <Button variant={`${heatmapsofActionHomeAway === 'away' ? 'danger' : 'outline-danger'}`} onClick={() => setHeatmapsofActionHomeAway("away")}>{awayTeam}</Button>
+                        </ButtonGroup>
+                    </div>
+                </div>
+                <div className='heatmaps-container'>
+                    <div>
+                        <svg ref={passClusterRef} fill='none' className='pitch heatmaps-pitch-container' />
+                    </div>
+                </div>
+            </div>
+
+            <div className='analytics-container'>
+                <div className='header'>
+                    <div className='title'>Heatmaps of Action</div >
+                    <div className='button-teams'>
+                        <ButtonGroup>
+                            <Button variant={`${heatmapsofActionHomeAway   === 'home' ? 'danger' : 'outline-danger'}`} onClick={() => setHeatmapsofActionHomeAway("home")}>{homeTeam}</Button>
+                            <Button variant={`${heatmapsofActionHomeAway === 'away' ? 'danger' : 'outline-danger'}`} onClick={() => setHeatmapsofActionHomeAway("away")}>{awayTeam}</Button>
+                        </ButtonGroup>
+                    </div>
+                </div>
+                <div className='heatmaps-container'>
+                    <div>
+                        <svg ref={heatmapsOfActionsRef} fill='none' className='pitch heatmaps-pitch-container' />
+                    </div>
+                </div>
+            </div>
+
             <div className='analytics-container'>
                 <div className='header'>
                     <div className='title'>Passing Network</div >
@@ -937,7 +939,7 @@ function Analytics(props) {
                 </div>
                 <div className='heatmaps-container'>
                     <div>
-                        <svg ref={heatmapsRef} fill='none' className='pitch' />
+                        <svg ref={heatmapsRef} fill='none' className='pitch pitch-container' />
                     </div>
                 </div>
             </div>
@@ -955,7 +957,7 @@ function Analytics(props) {
                 <div className='heatmaps-container'>
                     <div>
                         <p>{playerNamePassesHeatmaps} has {numberPlayerPasses} Passes</p>
-                        <svg ref={playerPassHeatmapsRef} fill='none' className='pitch' />
+                        <svg ref={playerPassHeatmapsRef} fill='none' className='pitch pitch-container' />
                     </div>
                 </div>
             </div>
@@ -965,7 +967,7 @@ function Analytics(props) {
                     <div className='title'>Possession Chain</div >
                 </div>
                 <div className='possession-chain-container'>
-                    <div>
+                    <div className='pitch-container' >
                         <svg ref={possessionChain1Ref} fill='none' className='pitch' />
                         <svg ref={possessionChain2Ref} fill='none' className='pitch' />
                         <svg ref={possessionChain3Ref} fill='none' className='pitch' />
@@ -974,6 +976,7 @@ function Analytics(props) {
                     </div>
                 </div>
             </div>
+
         </div>
     )
 }
