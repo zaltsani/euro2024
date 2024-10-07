@@ -3,36 +3,6 @@ body {
   font-family: Raleway;
 }
 
-.tooltip-background {
-  fill: white;
-  stroke-width: 2;
-  stroke: grey;
-}
-
-.tooltip-event-type {
-  font: bold 20px Raleway;
-  fill: black;
-}
-
-.tooltip-team {
-  font: 14px Raleway;
-  fill: black;
-}
-
-.tooltip-player {
-  font: 14px Raleway;
-  fill: black;
-}
-
-.tooltip-minute {
-  font: normal 18px;
-}
-
-.tooltip-content {
-  font: normal 18px;
-  fill: black;
-}
-
 .text-align-center{
   text-align: center
 }

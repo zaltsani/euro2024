@@ -204,42 +204,49 @@ function Events(props) {
 
             event
                 .on("mouseover", function(mouseEvent, d) {
-                    
-                    // event.select("circle").attr("r", 10)
-                    tooltipContent.attr("transform", `translate(${-20-300 + 20}, 0)`)
-                    tooltipContent.append("text").text(d.type.name).attr("y", -50).style("font-weight", "bold").style("font-size", "20px")
-                        .append("tspan").text(`  (${d.shot.outcome.name})`).style("font-weight", "normal").style("font-size", "18px")
-                    tooltipContent.append("text").text(`Team: ${d.team.name}`).attr("y", -20);
-                    tooltipContent.append("text").text(`Player: ${d.player.name}`).attr("y", 0);
-                    tooltipContent.append("text").text(`xG: ${Math.round(d.shot.statsbomb_xg * 100) / 100}`).attr("y", 20);
-                    tooltipContent.append("text").text(`Minute: ${d.minute}`).attr("y", 40)
-                    tooltipContent.append("text").text(`Play Pattern: ${d.play_pattern.name}`).attr("y", 60)
-                    tooltipContent.append("text").text(`Type: ${d.shot.type.name}`).attr("y", 80)
-                    tooltipContent.append("text").text(`Technique: ${d.shot.technique.name}`).attr("y", 100)
-                    tooltipContent.append("text").text(`Body Part: ${d.shot.body_part.name}`).attr("y", 120)
-                    // tooltipContent.append("text").text(`: `).attr("y", 60)
-
-                    tooltipBackground
-                        .attr("x", -20-300)
-                        .attr("y", -75)
-                        .attr("width", 300)
-                        .attr("height", 220)
-                    tooltipWrapper
-                        .attr("transform", `translate(${pitchProps.margin.left + scX(d['location'][0])}, ${pitchProps.margin.top + scY(d['location'][1])})`)
-                    tooltipWrapper
+                    var tooltipBackground = tooltipWrapper.append("rect")
+                        .attr("class", "tooltip-background")
+                    var tooltipContent = tooltipWrapper.append("g")
+                        .attr("class", "tooltip-content")
+                    tooltip
                         .transition().duration(400)
                         .style("opacity", 1)
+
+                    var marginRow = 25;
+                    var row = 8;
+                    let backgroundHeight = 40 + 26*row;
+                    let y = -backgroundHeight/2 + 30;
+
+                    // event.select("circle").attr("r", 10)
+                    tooltipContent.attr("transform", `translate(20, 0)`)
+                    tooltipContent.append("text").text(d.type.name).attr("y", y).style("font-weight", "bold").style("font-size", "20px")
+                        .append("tspan").text(`  (${d.shot.outcome.name})`).style("font-weight", "normal").style("font-size", "18px")
+                    tooltipContent.append("text").text(`Team: ${d.team.name}`).attr("y", y += marginRow);
+                    tooltipContent.append("text").text(`Player: ${d.player.name}`).attr("y", y += marginRow);
+                    tooltipContent.append("text").text(`xG: ${Math.round(d.shot.statsbomb_xg * 100) / 100}`).attr("y", y += marginRow);
+                    tooltipContent.append("text").text(`Minute: ${d.minute}`).attr("y", y += marginRow)
+                    tooltipContent.append("text").text(`Play Pattern: ${d.play_pattern.name}`).attr("y", y += marginRow)
+                    tooltipContent.append("text").text(`Type: ${d.shot.type.name}`).attr("y", y += marginRow)
+                    tooltipContent.append("text").text(`Technique: ${d.shot.technique.name}`).attr("y", y += marginRow)
+                    tooltipContent.append("text").text(`Body Part: ${d.shot.body_part.name}`).attr("y", y += marginRow)
+                    // tooltipContent.append("text").text(`: `).attr("y", 60)
+                    console.log(mouseEvent.offsetX)
+                    tooltipBackground
+                        .attr("x", 0)
+                        .attr("y", -backgroundHeight/2)
+                        .attr("width", 300)
+                        .attr("height", backgroundHeight)
+                    tooltipWrapper
+                        .attr("transform", `translate(
+                            ${scX(80) - 300 + pitchProps.margin.left},
+                            ${scX(40) + pitchProps.margin.top}
+                        )`)
                 })
                 .on("mouseout", function(d) {
+                    tooltip
+                        .transition().duration(500).style("opacity", 0)
                     tooltipWrapper
-                        .transition().duration(200)
-                        .style("opacity", 0)
-                    tooltipBackground
-                        .transition().duration(200)
-                        .attr("width", 0)
-                        .attr("height", 0)
-                    tooltipContent
-                        .transition().duration(200).selectAll("*").remove()
+                        .transition().duration(500).selectAll("*").remove()
                 })
                 
             event
@@ -399,13 +406,26 @@ function Events(props) {
                     .attr( 'y1', d => scY(d['location'][1]) )
                     .attr( 'x2', d => scX(d['pass']['end_location'][0]) )
                     .attr( 'y2', d => scY(d['pass']['end_location'][1]) )
+
             passEvent
                 .on("mouseover", function(mouseEvent, d) {
-                    let y = -50
+                    var tooltipBackground = tooltipWrapper.append("rect")
+                        .attr("class", "tooltip-background")
+                    var tooltipContent = tooltipWrapper.append("g")
+                        .attr("class", "tooltip-content")
+                    tooltip
+                        .transition().duration(200)
+                        .style("opacity", 1)
+                    
+                    let y = 0
                     const marginRow = 25
-                    let row = 5
+                    let row = 6
 
-                    tooltipContent.attr("transform", `translate(40, 0)`)
+                    let backgroundHeight = 40 + 26*row
+                    var backgroundWidth = 300;
+                    var paddingBackground = 10
+
+                    tooltipContent.attr("transform", `translate(${paddingBackground + 20}, -${backgroundHeight/2 - 30})`)
                     tooltipContent.append("text").text(d.type.name).attr("y", y).style("font-weight", "bold").style("font-size", "20px")
                         .append("tspan").text(` (${'outcome' in d.pass ? d.pass.outcome.name : "Complete"})`).style("font-weight", "normal").style("font-size", "18px")
                     tooltipContent.append("text").text(`Minute: ${d.minute}'`).attr("y", y += marginRow + 4)
@@ -418,31 +438,33 @@ function Events(props) {
                     tooltipContent.append("text").text(`Pass Height: ${d.pass.height.name}`).attr("y", y += marginRow)
                     tooltipContent.append("text").text(`Pass Play Pattern: ${d.play_pattern.name}`).attr("y", y += marginRow)
                     
-                    let backgroundHeight = 40 + 26*row
                     tooltipBackground
-                        .attr("x", 20)
-                        .attr("y", -75)
-                        .attr("width", 300)
+                        .attr("x", paddingBackground)
+                        .attr("y", -backgroundHeight/2)
+                        .attr("width", backgroundWidth)
                         .attr("height", backgroundHeight)
+
+                    const farXLoc = d.location[0] > d.pass.end_location[0] ? d.location[0] : d.pass.end_location[0];
+                    const nearXLoc = d.location[0] > d.pass.end_location[0] ? d.pass.end_location[0] : d.location[0];
+                    const farYLoc = d.location[1] > d.pass.end_location[1] ? d.location[1] : d.pass.end_location[1];
+                    const nearYLoc = d.location[1] > d.pass.end_location[1] ? d.pass.end_location[1] : d.location[1];
+                    const centerEvent = [nearXLoc + (farXLoc - nearXLoc)/2, nearYLoc + (farYLoc - nearYLoc)/2]
+                    console.log(scY(centerEvent[1]))
                     tooltipWrapper
                         .attr("transform", `translate(
-                            ${mouseEvent.offsetX < width - pitchProps.margin.left - 300 ? mouseEvent.offsetX : mouseEvent.offsetX - 300 - 40 },
-                            ${mouseEvent.offsetY < 75+20 ? 75+20 : mouseEvent.offsetY > height - pitchProps.margin.top - backgroundHeight ? height - pitchProps.margin.top - backgroundHeight + 75 : mouseEvent.offsetY}
+                            ${scX(farXLoc) < innerWidth  - backgroundWidth ? scX(farXLoc) : scX(nearXLoc) - backgroundWidth - 2*paddingBackground },
+                            ${(scY(centerEvent[1]) < innerHeight - backgroundHeight/2) && (scY(centerEvent[1])) > backgroundHeight/2 
+                                ? scY(centerEvent[1])
+                                : scY(centerEvent[1]) < backgroundHeight/2 ? backgroundHeight/2
+                                : innerHeight - backgroundHeight/2}
                         )`)
-                    tooltipWrapper
-                        .transition().duration(200)
-                        .style("opacity", 1)
                 })
             passEvent
                 .on("mouseout", function(d) {
+                    tooltip
+                        .transition().duration(500).style("opacity", 0)
                     tooltipWrapper
-                        .transition().duration(200)
-                    tooltipBackground
-                        .transition().duration(200)
-                        .attr("width", 0)
-                        .attr("height", 0)
-                    tooltipContent
-                        .transition().duration(200).selectAll("*").remove()
+                        .transition().duration(500).selectAll("*").remove()
                 })
             passEvent
                 .on("click", function(mouseEvent, d) {
@@ -542,42 +564,47 @@ function Events(props) {
                     .attr( 'cx', d => scX(d['location'][0]) )
                     .attr( 'cy', d => scY(d['location'][1]) )
                     .on("mouseover", function(mouseEvent, d) {
+                        var tooltipBackground = tooltipWrapper.append("rect")
+                            .attr("class", "tooltip-background")
+                        var tooltipContent = tooltipWrapper.append("g")
+                            .attr("class", "tooltip-content")
+                        tooltip
+                            .transition().duration(300)
+                            .style("opacity", 1)
     
-                        let y = -50
+                        let y = 25
                         const marginRow = 25
                         let row = 3
+                        var backgroundHeight = 40 + 26*row
+                        var backgroundMargin = 20
+                        var backgroundWidth = 250
     
-                        tooltipContent.attr("transform", `translate(40, 0)`)
+                        tooltipContent.attr("transform", `translate(${backgroundMargin + 20}, -${backgroundHeight/2})`)
                         tooltipContent.append("text").text(d.type.name).attr("y", y).style("font-weight", "bold").style("font-size", "20px")
                         tooltipContent.append("text").text(`Minute: ${d.minute}'`).attr("y", y += marginRow + 4)
                         tooltipContent.append("text").text(`Player: ${d.player.name}`).attr("y", y += marginRow)
                         tooltipContent.append("text").text(`Team: ${d.team.name}`).attr("y", y += marginRow)
-                        // tooltipContent.append("text").text(`Player: ${d.player.name}`).attr("y", y += marginRow)
 
-                        let backgroundHeight = 40 + 26*row
                         tooltipBackground
-                            .transition().duration(200)
-                            .attr("x", 20)
-                            .attr("y", -75)
-                            .attr("width", 300)
+                            .attr("x", backgroundMargin)
+                            .attr("y", -backgroundHeight/2)
+                            .attr("width", backgroundWidth)
                             .attr("height", backgroundHeight)
                         tooltipWrapper
-                            .transition().duration(200)
                             .attr("transform", `translate(
-                                ${mouseEvent.offsetX < width - pitchProps.margin.left - 300 ? mouseEvent.offsetX : mouseEvent.offsetX - 300 - 140 },
-                                ${mouseEvent.offsetY < 75+20 ? 75+20 : mouseEvent.offsetY > height - pitchProps.margin.top - backgroundHeight ? height - pitchProps.margin.top - backgroundHeight + 75 : mouseEvent.offsetY}
+                                ${scX(d.location[0]) < innerWidth - backgroundWidth ? scX(d.location[0]) : scX(d.location[0]) - backgroundWidth - 2*backgroundMargin },
+                                ${(scY(d.location[1]) < innerHeight - backgroundHeight/2) && (scY(d.location[1]) > backgroundHeight/2)
+                                ? scY(d.location[1])
+                                : scY(d.location[1] < backgroundHeight/2) ? backgroundHeight/2
+                                : innerHeight - backgroundHeight/2}
                             )`)
                             .style("opacity", 1)
                     })
                     .on("mouseout", function(d) {
+                        tooltip
+                            .transition().duration(200).style("opacity", 0)
                         tooltipWrapper
-                            .transition().duration(200)
-                        tooltipBackground
-                            .transition().duration(200)
-                            .attr("width", 0)
-                            .attr("height", 0)
-                        tooltipContent
-                            .transition().duration(200).selectAll("*").remove()
+                            .transition().duration(500).selectAll("*").remove()
                     })
         } else if (eventShow === 'dribble') {
             const dribbleFormatsInfo = [
@@ -592,49 +619,52 @@ function Events(props) {
                 .attr("cx", d => scX(d.location[0]))
                 .attr("cy", d => scY(d.location[1]))
                 .attr("r", 8)
-                // .attr("stroke", "red")
-                // .attr("stroke-width", 3)
                 .attr("fill", d => d.dribble.outcome.name === 'Complete' ? "blue" : "red");
             event
                 .on("mouseover", function(mouseEvent, d) {
-        
-                    let y = -50
+                    var tooltipBackground = tooltipWrapper.append("rect")
+                        .attr("class", "tooltip-background")
+                    var tooltipContent = tooltipWrapper.append("g")
+                        .attr("class", "tooltip-content")
+                    tooltip
+                        .transition().duration(300)
+                        .style("opacity", 1)
+
+                    let y = 25
                     const marginRow = 25
                     let row = 3
+                    var backgroundHeight = 40 + 26*row
+                    var backgroundMargin = 20
+                    var backgroundWidth = 250
 
-                    tooltipContent.attr("transform", `translate(40, 0)`)
+                    tooltipContent.attr("transform", `translate(${backgroundMargin + 20}, -${backgroundHeight/2})`)
                     tooltipContent.append("text").text(d.type.name).attr("y", y).style("font-weight", "bold").style("font-size", "20px")
                     tooltipContent.append("text").text(`Minute: ${d.minute}'`).attr("y", y += marginRow + 4)
                     tooltipContent.append("text").text(`Player: ${d.player.name}`).attr("y", y += marginRow)
                     tooltipContent.append("text").text(`Team: ${d.team.name}`).attr("y", y += marginRow)
-                    // tooltipContent.append("text").text(`Player: ${d.player.name}`).attr("y", y += marginRow)
 
-                    let backgroundHeight = 40 + 26*row
                     tooltipBackground
-                        .transition().duration(200)
-                        .attr("x", 20)
-                        .attr("y", -75)
-                        .attr("width", 300)
+                        .attr("x", backgroundMargin)
+                        .attr("y", -backgroundHeight/2)
+                        .attr("width", backgroundWidth)
                         .attr("height", backgroundHeight)
                     tooltipWrapper
-                        .transition().duration(200)
                         .attr("transform", `translate(
-                            ${mouseEvent.offsetX < width - pitchProps.margin.left - 300 ? mouseEvent.offsetX : mouseEvent.offsetX - 300 - 140 },
-                            ${mouseEvent.offsetY < 75+20 ? 75+20 : mouseEvent.offsetY > height - pitchProps.margin.top - backgroundHeight ? height - pitchProps.margin.top - backgroundHeight + 75 : mouseEvent.offsetY}
+                            ${scX(d.location[0]) < innerWidth - backgroundWidth ? scX(d.location[0]) : scX(d.location[0]) - backgroundWidth - 2*backgroundMargin },
+                            ${(scY(d.location[1]) < innerHeight - backgroundHeight/2) && (scY(d.location[1]) > backgroundHeight/2)
+                            ? scY(d.location[1])
+                            : scY(d.location[1] < backgroundHeight/2) ? backgroundHeight/2
+                            : innerHeight - backgroundHeight/2}
                         )`)
                         .style("opacity", 1)
                 })
-            event
                 .on("mouseout", function(d) {
+                    tooltip
+                        .transition().duration(200).style("opacity", 0)
                     tooltipWrapper
-                        .transition().duration(200)
-                    tooltipBackground
-                        .transition().duration(200)
-                        .attr("width", 0)
-                        .attr("height", 0)
-                    tooltipContent
-                        .transition().duration(200).selectAll("*").remove()
+                        .transition().duration(500).selectAll("*").remove()
                 })
+                
             event
                 .on("click", function(mouseEvent, d) {
                     if (!eventClick) {
@@ -773,49 +803,62 @@ function Events(props) {
 
             event
                 .on("mouseover", function(mouseEvent, d) {
-        
-                    let y = -50
+                    var tooltipBackground = tooltipWrapper.append("rect")
+                        .attr("class", "tooltip-background")
+                    var tooltipContent = tooltipWrapper.append("g")
+                        .attr("class", "tooltip-content")
+                    tooltip
+                        .transition().duration(200)
+                        .style("opacity", 1)
+                    
+                    let y = 0
                     const marginRow = 25
                     let row = 4
+
+                    let backgroundHeight = 40 + 26*row
+                    var backgroundWidth = 300;
+                    var paddingBackground = 10
+
                     const startMetreX = d.location[0] * 105/120
                     const startMetreY = d.location[1] * 68/80
                     const endMetreX = d.carry.end_location[0] * 105/120
                     const endMetreY = d.carry.end_location[1] * 68/80
                     const length = ((startMetreX - endMetreX) ** 2 + (startMetreY - endMetreY) ** 2) ** 0.5
 
-                    tooltipContent.attr("transform", `translate(40, 0)`)
+                    tooltipContent.attr("transform", `translate(${paddingBackground + 20}, -${backgroundHeight/2 - 30})`)
                     tooltipContent.append("text").text(d.type.name).attr("y", y).style("font-weight", "bold").style("font-size", "20px")
-                    tooltipContent.append("text").text(`Length: ${Math.round(length)} m`).attr("y", y += marginRow + 4)
-                    tooltipContent.append("text").text(`Minute: ${d.minute}'`).attr("y", y += marginRow + 4)
+                    tooltipContent.append("text").text(`Length: ${Math.round(length)} m`).attr("y", y += marginRow + 2)
+                    tooltipContent.append("text").text(`Minute: ${d.minute}'`).attr("y", y += marginRow)
                     tooltipContent.append("text").text(`Player: ${d.player.name}`).attr("y", y += marginRow)
                     tooltipContent.append("text").text(`Team: ${d.team.name}`).attr("y", y += marginRow)
-                    // tooltipContent.append("text").text(`Player: ${d.player.name}`).attr("y", y += marginRow)
-
-                    let backgroundHeight = 40 + 26*row
+                    
                     tooltipBackground
-                        .transition().duration(200)
-                        .attr("x", 20)
-                        .attr("y", -75)
-                        .attr("width", 300)
+                        .attr("x", paddingBackground)
+                        .attr("y", -backgroundHeight/2)
+                        .attr("width", backgroundWidth)
                         .attr("height", backgroundHeight)
+
+                    const farXLoc = d.location[0] > d.carry.end_location[0] ? d.location[0] : d.carry.end_location[0];
+                    const nearXLoc = d.location[0] > d.carry.end_location[0] ? d.carry.end_location[0] : d.location[0];
+                    const farYLoc = d.location[1] > d.carry.end_location[1] ? d.location[1] : d.carry.end_location[1];
+                    const nearYLoc = d.location[1] > d.carry.end_location[1] ? d.carry.end_location[1] : d.location[1];
+                    const centerEvent = [nearXLoc + (farXLoc - nearXLoc)/2, nearYLoc + (farYLoc - nearYLoc)/2]
+                    console.log(scY(centerEvent[1]))
                     tooltipWrapper
-                        .transition().duration(200)
                         .attr("transform", `translate(
-                            ${mouseEvent.offsetX < width - pitchProps.margin.left - 300 ? mouseEvent.offsetX : mouseEvent.offsetX - 300 - 140 },
-                            ${mouseEvent.offsetY < 75+20 ? 75+20 : mouseEvent.offsetY > height - pitchProps.margin.top - backgroundHeight ? height - pitchProps.margin.top - backgroundHeight + 75 : mouseEvent.offsetY}
+                            ${scX(farXLoc) < innerWidth  - backgroundWidth ? scX(farXLoc) : scX(nearXLoc) - backgroundWidth - 2*paddingBackground },
+                            ${(scY(centerEvent[1]) < innerHeight - backgroundHeight/2) && (scY(centerEvent[1])) > backgroundHeight/2 
+                                ? scY(centerEvent[1])
+                                : scY(centerEvent[1]) < backgroundHeight/2 ? backgroundHeight/2
+                                : innerHeight - backgroundHeight/2}
                         )`)
-                        .style("opacity", 1)
                 })
             event
                 .on("mouseout", function(d) {
+                    tooltip
+                        .transition().duration(500).style("opacity", 0)
                     tooltipWrapper
-                        .transition().duration(200)
-                    tooltipBackground
-                        .transition().duration(200)
-                        .attr("width", 0)
-                        .attr("height", 0)
-                    tooltipContent
-                        .transition().duration(200).selectAll("*").remove()
+                        .transition().duration(500).selectAll("*").remove()
                 })
 
             // Legend
@@ -876,45 +919,26 @@ function Events(props) {
 		////////////////////////////// Add Tooltip ////////////////////////////////
 		///////////////////////////////////////////////////////////////////////////
 
-        var tooltipWrapper = svg.append("g")
-		  .attr("class", "tooltip-wrapper")
-		  .style("opacity", 0);
+        var tooltip = svg
+            .append("g")
+                .attr("class", "tooltip")    
+                .attr("transform", `translate(${pitchProps.margin.left}, ${pitchProps.margin.top})`)
+                .style("opacity", 1);
 
-        var tooltipBackground = tooltipWrapper.append("rect")
-          .attr("class", "tooltip-background")
+        var tooltipWrapper = tooltip.append("g")
+            .attr("class", "tooltip-wrapper")
+        //   .attr("transform", `translate(${pitchProps.margin.left}, ${pitchProps.margin.top})`)
+		//   .style("opacity", 0);
+
+        // var tooltipBackground = tooltipWrapper.append("rect")
+        //     .attr("class", "tooltip-background")
         //   .attr("height", 150);
         
-        var tooltipContent = tooltipWrapper.append("g")
-            .attr("class", "tooltip-content")
+        // var tooltipContent = tooltipWrapper.append("g")
+        //     .attr("class", "tooltip-content")
             // .attr("transform", "translate(40, 0)")
 
     }, [eventsData, homeTeamName, awayTeamName, chalkboardRef, homePlayersPlay, awayPlayersPlay, eventShow, threeSixtyData, homeAway, value])
-
-    // const shotFormatsInfo = [
-    //     {label: "Goal", color: "red"},
-    //     {label: "Shot On Target", color: "#202020"},
-    //     {label: "Shot Off Target", color: "white"}
-    // ]
-    // const passFormatsInfo = [
-    //     {label: "Successful", color: "blue"}
-    // ]
-    // d3.select(".legend-container").selectAll("*").remove()
-    // const legendItems = d3.select(".legend-container")
-    //             .append("ul")
-    //                 .attr("class", "color-legend")
-    //             .selectAll(".color-legend-item")
-    //             .data(shotFormatsInfo)
-    //             .join("li")
-    //                 .attr("class", "color-legend-item")
-    //         legendItems
-    //             .append("span")
-    //                 .attr("class", "color-legend-item-color")
-    //                 .style("background-color", d => d.color)
-    //                 .style("border-color", "black")
-    //         legendItems
-    //             .append("span")
-    //                 .attr("class", "color-legend-item-label")
-    //                 .text(d => d.label)
 
 
     return (

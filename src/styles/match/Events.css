@@ -56,3 +56,30 @@
 .reset-click {
     display: block;
 }
+
+
+.tooltip-background {
+    fill: white;
+    stroke-width: 2;
+    stroke: grey;
+    rx: 5;
+}
+.tooltip-event-type {
+    font: bold 20px Raleway;
+    fill: black;
+}
+.tooltip-team {
+    font: 14px Raleway;
+    fill: black;
+}
+.tooltip-player {
+    font: 14px Raleway;
+    fill: black;
+}
+.tooltip-minute {
+    font: normal 18px;
+}
+.tooltip-content {
+    font: normal 18px;
+    fill: black;
+}

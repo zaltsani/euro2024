@@ -94,7 +94,12 @@ function FullStats(props) {
     const tackleWon = tackle.filter(d => d.duel.outcome.name === "Won" || d.duel.outcome.name === "Success" || d.duel.outcome.name === "Success In Play");
     const clearance = events_data.filter(d => d.type.name === "Clearance");
     const ballRecovery = events_data.filter(d => d.type.name === "Ball Recovery");
-    console.log(tackle.map(d => d.duel.outcome.name))
+
+    const offsides = events_data.filter(d => d.type.name === "Offside")
+    const redCardsFouls = foulsCommitted.filter(d => 'card' in d && (d.card.name))
+    const badBehaviour = events_data.filter(d => "bad_behaviour" in d)
+    // const yellowCards = badBehaviour.filter(d => d.bad_behaviour.)
+    console.log(badBehaviour)
 
 
     const topStats = [
@@ -151,8 +156,15 @@ function FullStats(props) {
         {title: "Interception", home: `${homeStats(interceptionWon)}/${homeStats(interception)}`, away: `${awayStats(interceptionWon)}/${awayStats(interception)}`},
         {title: "Tackle", home: `${homeStats(tackleWon)}/${homeStats(tackle)}`, away: `${awayStats(tackleWon)}/${awayStats(tackle)}`},
         {title: "Clearance", home: homeStats(clearance), away: awayStats(clearance)},
-        {title: "Ball Recovery", home: homeStats(ballRecovery), away: awayStats(ballRecovery)}  ,
-        {title: "", home: "", away: ""},
+        {title: "Ball Recovery", home: homeStats(ballRecovery), away: awayStats(ballRecovery)},
+        // {title: "", home: "", away: ""},
+    ]
+    const miscellaneousStats = [
+        {title: "Fouls", home: homeStats(foulsCommitted), away: awayStats(foulsCommitted)},
+        {title: "Offside", home: `${homeStats(offsides)}`, away: `${awayStats(offsides)}`},
+        {title: "Yellow Card", home: `${homeStats(tackleWon)}/${homeStats(tackle)}`, away: `${awayStats(tackleWon)}/${awayStats(tackle)}`},
+        {title: "Red Card", home: homeStats(clearance), away: awayStats(clearance)},
+        // {title: "Ball Recovery", home: homeStats(ballRecovery), away: awayStats(ballRecovery)},
     ]
 
     return (
@@ -201,6 +213,18 @@ function FullStats(props) {
                     </div>
                 ))}
             </div>
+
+            <div className='stats-container'>
+                <div className='stats-container-title'>Miscellaneous</div>
+                {miscellaneousStats.map(stats => (
+                    <div className='stats-row'>
+                        <div className={`home-stats ${stats.home > stats.away ? "home-over" : ""}`}>{stats.home}</div>
+                        <div className='stats-title'>{stats.title}</div>
+                        <div className={`away-stats ${stats.away > stats.home ? "away-over" : ""}`}>{stats.away}</div>
+                    </div>
+                ))}
+            </div>
+
         </div>
   )
 }
