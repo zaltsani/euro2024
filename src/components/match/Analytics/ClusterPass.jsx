@@ -90,6 +90,34 @@ function ClusterPass(data, pitchProps) {
             const baseRightY = angle(startX, startY, endX, endY)['baseRightY']
             return `M ${scX(endX)}, ${scY(endY)} L ${scX(baseLeftX)}, ${scY(baseLeftY)} L${scX(baseRightX)}, ${scY(baseRightY)} L ${scX(endX)}, ${scY(endY)}`
         })
+
+    // Make Direction of Attack
+    const attackingDirection = svg.append("g").attr("class", "direction-of-attack").attr("transform", `translate(${pitchProps.margin.left}, ${pitchProps.margin.top})`)
+    attackingDirection.append("path")
+        .attr("d",
+            `M${innerWidth/2 - innerWidth/4} ${innerHeight + pitchProps.margin.bottom*1/3}
+            L${innerWidth/2 + innerWidth/4} ${innerHeight + pitchProps.margin.bottom*1/3}`)
+        .attr("stroke", "grey")
+        .attr("stroke-width", 2)
+    
+    attackingDirection.append("path")
+        .attr("d", `
+                M${innerWidth/2 + innerWidth/4} ${innerHeight + pitchProps.margin.bottom*1/3}
+                L${innerWidth/2 + innerWidth/4 - 15} ${innerHeight + pitchProps.margin.bottom*1/3 + 8}
+                L${innerWidth/2 + innerWidth/4 - 15} ${innerHeight + pitchProps.margin.bottom*1/3 - 8}
+                L${innerWidth/2 + innerWidth/4 } ${innerHeight + pitchProps.margin.bottom*1/3}
+            `)
+        .attr("fill", "grey ")
+        .attr("stroke", "grey")
+        .attr("stroke-width", 2);
+
+    attackingDirection
+        .append("text")
+            .attr("transform", `translate(${innerWidth*1/2}, ${innerHeight + pitchProps.margin.bottom*2/3})`)
+            .text(`Direction of Attack`)
+            .attr("fill", "grey")
+            .attr("text-anchor", "middle")
+            .attr("font-size", "12px");
     
 }
 

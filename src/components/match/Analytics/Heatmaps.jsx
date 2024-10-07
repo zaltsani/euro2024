@@ -62,8 +62,8 @@ function Heatmaps(data, pitchProps) {
     attackingDirection.append("path")
         .attr("d", `
                 M${innerWidth/2 + innerWidth/4} ${innerHeight + pitchProps.margin.bottom*1/3}
-                L${innerWidth/2 + innerWidth/4 - 15} ${innerHeight + pitchProps.margin.bottom*1/3 + 10}
-                L${innerWidth/2 + innerWidth/4 - 15} ${innerHeight + pitchProps.margin.bottom*1/3 - 10}
+                L${innerWidth/2 + innerWidth/4 - 15} ${innerHeight + pitchProps.margin.bottom*1/3 + 8}
+                L${innerWidth/2 + innerWidth/4 - 15} ${innerHeight + pitchProps.margin.bottom*1/3 - 8}
                 L${innerWidth/2 + innerWidth/4 } ${innerHeight + pitchProps.margin.bottom*1/3}
             `)
         .attr("fill", "grey ")
@@ -79,41 +79,41 @@ function Heatmaps(data, pitchProps) {
             .attr("font-size", "14px");
 
     // Color Legend
-    const legendWidth = pitchProps.width/20;
-    const legendHeight = innerHeight;
-    const legendX = 0;
-    const legendY = 0;
+    // const legendWidth = pitchProps.width/20;
+    // const legendHeight = innerHeight;
+    // const legendX = 0;
+    // const legendY = 0;
 
-    const defs = svg.append("defs");
+    // const defs = svg.append("defs");
 
-    const linearGradient = defs.append("linearGradient")
-        .attr("id", "linear-gradient")
-        .attr("x1", "0%")
-        .attr("y1", "0%")
-        .attr("x2", "0%")
-        .attr("y2", "100%");
+    // const linearGradient = defs.append("linearGradient")
+    //     .attr("id", "linear-gradient")
+    //     .attr("x1", "0%")
+    //     .attr("y1", "0%")
+    //     .attr("x2", "0%")
+    //     .attr("y2", "100%");
 
-    const numStops = 10; // Number of gradient stops
-    const stops = d3.range(numStops).map(i => ({
-        offset: `${(i / (numStops - 1)) * 100}%`,
-        color: d3.interpolateBlues(i / (numStops - 1))
-    }));
+    // const numStops = 10; // Number of gradient stops
+    // const stops = d3.range(numStops).map(i => ({
+    //     offset: `${(i / (numStops - 1)) * 100}%`,
+    //     color: d3.interpolateBlues(i / (numStops - 1))
+    // }));
 
-    linearGradient.selectAll("stop")
-        .data(stops)
-        .enter().append("stop")
-        .attr("offset", d => d.offset)
-        .attr("stop-color", d => d.color);
+    // linearGradient.selectAll("stop")
+    //     .data(stops)
+    //     .enter().append("stop")
+    //     .attr("offset", d => d.offset)
+    //     .attr("stop-color", d => d.color);
     
-    const legend = svg
-        .append("g")
-            .attr("transform", `translate(${pitchProps.width - 1/3*pitchProps.margin.right}, ${pitchProps.margin.top})`)
-    legend.append("rect")
-        .attr("x", legendX)
-        .attr("y", legendY)
-        .attr("width", legendWidth)
-        .attr("height", legendHeight)
-        .style("fill", "url(#linear-gradient)");
+    // const legend = svg
+    //     .append("g")
+    //         .attr("transform", `translate(${pitchProps.width - 1/3*pitchProps.margin.right}, ${pitchProps.margin.top})`)
+    // legend.append("rect")
+    //     .attr("x", legendX)
+    //     .attr("y", legendY)
+    //     .attr("width", legendWidth)
+    //     .attr("height", legendHeight)
+    //     .style("fill", "url(#linear-gradient)");
 
     // Create scale and axis for legend
     // const legendScale = d3.scaleLinear()

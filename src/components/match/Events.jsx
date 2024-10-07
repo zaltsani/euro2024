@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 import { Button, ButtonGroup, Col, Form, Row } from 'react-bootstrap';
 import '../../styles/match/Events.css';
 import { Slider, Stack,  } from '@mui/material';
-
+import InfoIcon from '@mui/icons-material/Info';
 
 function Events(props) {
     const { matchData, lineupsData, eventsData, threeSixtyData } = props;
@@ -170,8 +170,16 @@ function Events(props) {
         const duel = eventsData.filter(event => event.type.name === 'Duel');
         const dribble = eventsData.filter(event => event.type.name === 'Dribble');
         const defensiveAction = eventsData.filter(event => (event.type.name === 'Interception') || (event.type.name === 'Clearance') || (event.type.name === 'Duel') || (event.type.name === 'Ball Recovery') || (event.type.name === 'Block') || (event.type.name === 'Foul Committed') || (event.type.name === '50/50'));
+        const carry = eventsData.filter(event => event.type.name === 'Carry');
 
-        const data = eventShow === 'shot' ? shot : eventShow === 'pass' ? pass : eventShow === 'interception' ? interceptions : eventShow === 'clearance' ? clearances : eventShow === 'duel' ? duel : eventShow === 'dribble' ? dribble : shot;
+        const data = eventShow === 'shot' ? shot
+            : eventShow === 'pass' ? pass
+            : eventShow === 'interception' ? interceptions
+            : eventShow === 'clearance' ? clearances 
+            : eventShow === 'duel' ? duel 
+            : eventShow === 'dribble' ? dribble 
+            : eventShow === 'carry' ? carry
+            : shot;
         const filteredData = data.filter(event => player_ids.includes(event.player.id) && event.team.name === (homeAway === 'home' ? homeTeamName : awayTeamName) && event.minute >= value[0] && event.minute <= value[1]);
         
         const events = d3.select(chalkboardRef.current)
@@ -556,7 +564,7 @@ function Events(props) {
                         tooltipWrapper
                             .transition().duration(200)
                             .attr("transform", `translate(
-                                ${mouseEvent.offsetX < width - pitchProps.margin.left - 300 ? mouseEvent.offsetX : mouseEvent.offsetX - 300 - 40 },
+                                ${mouseEvent.offsetX < width - pitchProps.margin.left - 300 ? mouseEvent.offsetX : mouseEvent.offsetX - 300 - 140 },
                                 ${mouseEvent.offsetY < 75+20 ? 75+20 : mouseEvent.offsetY > height - pitchProps.margin.top - backgroundHeight ? height - pitchProps.margin.top - backgroundHeight + 75 : mouseEvent.offsetY}
                             )`)
                             .style("opacity", 1)
@@ -587,6 +595,67 @@ function Events(props) {
                 // .attr("stroke", "red")
                 // .attr("stroke-width", 3)
                 .attr("fill", d => d.dribble.outcome.name === 'Complete' ? "blue" : "red");
+            event
+                .on("mouseover", function(mouseEvent, d) {
+        
+                    let y = -50
+                    const marginRow = 25
+                    let row = 3
+
+                    tooltipContent.attr("transform", `translate(40, 0)`)
+                    tooltipContent.append("text").text(d.type.name).attr("y", y).style("font-weight", "bold").style("font-size", "20px")
+                    tooltipContent.append("text").text(`Minute: ${d.minute}'`).attr("y", y += marginRow + 4)
+                    tooltipContent.append("text").text(`Player: ${d.player.name}`).attr("y", y += marginRow)
+                    tooltipContent.append("text").text(`Team: ${d.team.name}`).attr("y", y += marginRow)
+                    // tooltipContent.append("text").text(`Player: ${d.player.name}`).attr("y", y += marginRow)
+
+                    let backgroundHeight = 40 + 26*row
+                    tooltipBackground
+                        .transition().duration(200)
+                        .attr("x", 20)
+                        .attr("y", -75)
+                        .attr("width", 300)
+                        .attr("height", backgroundHeight)
+                    tooltipWrapper
+                        .transition().duration(200)
+                        .attr("transform", `translate(
+                            ${mouseEvent.offsetX < width - pitchProps.margin.left - 300 ? mouseEvent.offsetX : mouseEvent.offsetX - 300 - 140 },
+                            ${mouseEvent.offsetY < 75+20 ? 75+20 : mouseEvent.offsetY > height - pitchProps.margin.top - backgroundHeight ? height - pitchProps.margin.top - backgroundHeight + 75 : mouseEvent.offsetY}
+                        )`)
+                        .style("opacity", 1)
+                })
+            event
+                .on("mouseout", function(d) {
+                    tooltipWrapper
+                        .transition().duration(200)
+                    tooltipBackground
+                        .transition().duration(200)
+                        .attr("width", 0)
+                        .attr("height", 0)
+                    tooltipContent
+                        .transition().duration(200).selectAll("*").remove()
+                })
+            event
+                .on("click", function(mouseEvent, d) {
+                    if (!eventClick) {
+                        setEventClick(true);
+                        events.selectAll("*").attr("opacity", 0);
+                        event.attr("opacity", 1);
+                        d3.select(this).selectAll("*").attr("opacity", 1);
+                        const eventThreeSixty = threeSixtyData.find(threeSixty => threeSixty.event_uuid === d.id);
+                        // console.log(eventThreeSixty)
+                        const threeSixty = svg.append("g").attr("class", "three-sixty")
+                        threeSixty
+                            .selectAll("circle")
+                            .data(eventThreeSixty.freeze_frame)
+                                .join("circle")
+                                    .attr("cx", d => scX(d.location[0]))
+                                    .attr("cy", d => scY(d.location[1]))
+                                    .attr("r", 5)
+                                    .attr("stroke", d => d.teammate ? "blue" : "red")
+                                    .attr("stroke-width", 2)
+                                    .attr("fill", d => d.keeper ? "red" : "none")
+                }})
 
             // Legend
             const Legend = svg
@@ -639,6 +708,167 @@ function Events(props) {
                     .attr("fill", d => d.color)
                     // .attr("stroke", "blue")
                     .attr("stroke-width", 0.5)
+        } else if (eventShow === 'carry') {
+            // const dribbleFormatsInfo = [
+            //     {id: 'complete', label: "Successful", color: "blue", count: filteredData.filter(d => d.dribble.outcome.name === 'Complete').length},
+            //     {id: 'incomplete', label: "Unsuccessful", color: "red", count: filteredData.filter(d => d.dribble.outcome.name === 'Incomplete').length},
+            // ]
+            const event = events.selectAll(".event-group")
+                .data(filteredData)
+                .join("g")
+                    .attr("class", "event-group")
+                    .attr("stroke", "blue")
+                    .attr("fill", "blue")
+                    // .attr("opacity", d => {
+                    //     const startMetreX = d.location[0] * 105/120
+                    //     const startMetreY = d.location[1] * 68/80
+                    //     const endMetreX = d.carry.end_location[0] * 105/120
+                    //     const endMetreY = d.carry.end_location[1] * 68/80
+                    //     const length = ((startMetreX - endMetreX) ** 2 + (startMetreY - endMetreY) ** 2) ** 0.5
+                    //     return length > 5 ? 1 : 0
+                    // })
+            
+            var arrowLength = 1;
+            function angle(x1, y1, x2, y2) {
+                var dx = x2 - x1;
+                var dy = y2 - y1;
+                var angle = Math.atan2(dy, dx)
+                var baseLeftX = x2 - arrowLength * Math.cos(angle - Math.PI / 6)
+                var baseLeftY = y2 - arrowLength * Math.sin(angle - Math.PI / 6)
+                var baseRightX = x2 - arrowLength * Math.cos(angle + Math.PI / 6)
+                var baseRightY = y2 - arrowLength * Math.sin(angle + Math.PI / 6)
+                
+                return ({
+                    'baseLeftX': baseLeftX,
+                    'baseLeftY': baseLeftY,
+                    'baseRightX': baseRightX,
+                    'baseRightY': baseRightY
+                })
+            }
+
+            event
+                .append( "line" )
+                    .attr("stroke-width", 1.5)
+                    .attr( 'x1', d => scX(d['location'][0]) )
+                    .attr( 'y1', d => scY(d['location'][1]) )
+                    .attr( 'x2', d => scX(d['carry']['end_location'][0]))
+                    .attr( 'y2', d => scY(d['carry']['end_location'][1]));
+            
+            event
+                .append('path')
+                .attr( 'd', d => {
+                    const startX = d['location'][0]
+                    const startY = d['location'][1]
+                    const endX = d['carry']['end_location'][0]
+                    const endY = d['carry']['end_location'][1]
+                    const baseLeftX = angle(startX, startY, endX, endY)['baseLeftX']
+                    const baseLeftY = angle(startX, startY, endX, endY)['baseLeftY']
+                    const baseRightX = angle(startX, startY, endX, endY)['baseRightX']
+                    const baseRightY = angle(startX, startY, endX, endY)['baseRightY']
+                    return `M ${scX(endX)}, ${scY(endY)}
+                            L ${scX(baseLeftX)}, ${scY(baseLeftY)}
+                            L ${scX(baseRightX)}, ${scY(baseRightY)}
+                            L ${scX(endX)}, ${scY(endY)}`
+                })
+
+            event
+                .on("mouseover", function(mouseEvent, d) {
+        
+                    let y = -50
+                    const marginRow = 25
+                    let row = 4
+                    const startMetreX = d.location[0] * 105/120
+                    const startMetreY = d.location[1] * 68/80
+                    const endMetreX = d.carry.end_location[0] * 105/120
+                    const endMetreY = d.carry.end_location[1] * 68/80
+                    const length = ((startMetreX - endMetreX) ** 2 + (startMetreY - endMetreY) ** 2) ** 0.5
+
+                    tooltipContent.attr("transform", `translate(40, 0)`)
+                    tooltipContent.append("text").text(d.type.name).attr("y", y).style("font-weight", "bold").style("font-size", "20px")
+                    tooltipContent.append("text").text(`Length: ${Math.round(length)} m`).attr("y", y += marginRow + 4)
+                    tooltipContent.append("text").text(`Minute: ${d.minute}'`).attr("y", y += marginRow + 4)
+                    tooltipContent.append("text").text(`Player: ${d.player.name}`).attr("y", y += marginRow)
+                    tooltipContent.append("text").text(`Team: ${d.team.name}`).attr("y", y += marginRow)
+                    // tooltipContent.append("text").text(`Player: ${d.player.name}`).attr("y", y += marginRow)
+
+                    let backgroundHeight = 40 + 26*row
+                    tooltipBackground
+                        .transition().duration(200)
+                        .attr("x", 20)
+                        .attr("y", -75)
+                        .attr("width", 300)
+                        .attr("height", backgroundHeight)
+                    tooltipWrapper
+                        .transition().duration(200)
+                        .attr("transform", `translate(
+                            ${mouseEvent.offsetX < width - pitchProps.margin.left - 300 ? mouseEvent.offsetX : mouseEvent.offsetX - 300 - 140 },
+                            ${mouseEvent.offsetY < 75+20 ? 75+20 : mouseEvent.offsetY > height - pitchProps.margin.top - backgroundHeight ? height - pitchProps.margin.top - backgroundHeight + 75 : mouseEvent.offsetY}
+                        )`)
+                        .style("opacity", 1)
+                })
+            event
+                .on("mouseout", function(d) {
+                    tooltipWrapper
+                        .transition().duration(200)
+                    tooltipBackground
+                        .transition().duration(200)
+                        .attr("width", 0)
+                        .attr("height", 0)
+                    tooltipContent
+                        .transition().duration(200).selectAll("*").remove()
+                })
+
+            // Legend
+            // const Legend = svg
+            //     .append("g")
+            //         .attr("transform", `translate(${pitchProps.margin.left}, 0)`)
+            //         .attr("class", "legend")
+            //     .selectAll(".legend-item")
+            //     .data(dribbleFormatsInfo)
+            //     .join("g")
+            //         .attr("class", "legend-item")
+            // var carryLegendTextWidth = []
+            // Legend
+            //     .append("text")
+            //         .text(d => `${d.label}: ${d.count}`)
+            //         .each(function(d, i) {
+            //             carryLegendTextWidth.push(this.getComputedTextLength());
+            //             this.remove();
+            //         })
+
+            // const legendPosition = []
+            // carryLegendTextWidth.forEach((textWidth, index) => {
+            //     if (index === 0) {
+            //         return legendPosition.push(0)
+            //     } else if (index === 1) {
+            //         return legendPosition.push(carryLegendTextWidth[index-1] + 60)
+            //     } else {
+            //         const sliceTextWidth = carryLegendTextWidth.slice(0, index);
+            //         const sumSlice = sliceTextWidth.reduce((a, b) => a + b, 0);
+            //         return legendPosition.push(sumSlice + 60*index)
+            //     }
+            // })
+            // Legend.attr("transform", (d, i) => `translate(${legendPosition[i]})`)
+            // Legend
+            //     .append("text")
+            //         .text(d => `${d.label}: ${d.count}`)
+            //         .attr("x", 20)
+            //         .attr("y", pitchProps.margin.top/2)
+            //         .attr("fill", "black")
+            //         .attr("dominant-baseline", "middle")
+            //         .attr("font-size", "18px")
+            //         .attr("font-weight", "bold")
+            // Legend
+            //     .append("rect")
+            //         .attr("x", 0)
+            //         .attr("y", pitchProps.margin.top/2 - 15/2 - 3)
+            //         .attr("rx", 3)
+            //         .attr("width", 15)
+            //         .attr("height", 15)
+            //         .attr("r", 8)
+            //         .attr("fill", d => d.color)
+            //         // .attr("stroke", "blue")
+            //         .attr("stroke-width", 0.5)
         }
 
         
@@ -703,6 +933,7 @@ function Events(props) {
                         <Button variant={`${eventShow === 'shot' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('shot')}>Shot</Button>
                         <Button variant={`${eventShow === 'pass' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('pass')}>Pass</Button>
                         <Button variant={`${eventShow === 'dribble' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('dribble')}>Dribble</Button>
+                        <Button variant={`${eventShow === 'carry' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('carry')}>Carry Ball</Button>
                         <Button variant={`${eventShow === 'interception' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('interception')}>Interception</Button>
                         <Button variant={`${eventShow === 'clearance' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('clearance')}>Clearance</Button>
                         <Button variant={`${eventShow === 'duel' ? 'dark' : 'outline-dark'}`} onClick={() => setEventShow('duel')}>Duel</Button>
@@ -728,6 +959,19 @@ function Events(props) {
                         ]}
                         color='danger'
                     />
+                </div>
+
+                <div className='info-container m-2 ms-5'>
+                    <div className='info'>
+                        <InfoIcon className='m-2' />
+                        <span className='me-3'>Hover on event to see detail event</span>
+                    </div>
+                </div>
+                <div className='info-container m-2 ms-5'>
+                    <div className='info'>
+                        <InfoIcon className='m-2' />
+                        <span className='me-3'>Click on event to see three-sixty event (for shot, pass, and dribble)</span>
+                    </div>
                 </div>
             </Col>
 
@@ -762,7 +1006,7 @@ function Events(props) {
                 ))}
             </Col>
             {eventClick && 
-                    <Button onClick={handleEventClickOut}>Reset</Button>
+                <Button class onClick={handleEventClickOut}>Reset</Button>
             }
         </Row>
   )

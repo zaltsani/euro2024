@@ -44,4 +44,15 @@
 }
 .color-legend-item::marker{
     color: white;
+    /* display: ; */
+}
+
+.info {
+    background-color: #D9D9D9;
+    display: inline-block;
+    border-radius: 12px;
+}
+
+.reset-click {
+    display: block;
 }
